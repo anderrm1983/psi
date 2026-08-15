@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grand Uncertainties Matrix · Puget Sound Institute</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#152C34;
+    --navy-deep:#0E1F25;
+    --teal:#4F9C93;
+    --teal-dark:#356F68;
+    --tan:#C9BFA6;
+    --shell:#F7F5EF;
+    --shell-2:#EFEBE0;
+    --ink:#1F2A2E;
+    --ink-soft:#5B6B6E;
+    --amber:#C98A2E;
+    --amber-deep:#9C6A1E;
+    --line:#DCD5C4;
+    --white:#FFFFFF;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(21,44,52,0.06), 0 6px 20px rgba(21,44,52,0.05);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--shell);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+
+  .skip-link{
+    position:absolute; left:-999px; top:0;
+    background:var(--white); color:var(--navy); padding:10px 16px; z-index:100;
+  }
+  .skip-link:focus{left:8px; top:8px;}
+
+  header.site{
+    background:linear-gradient(180deg,var(--navy) 0%, var(--navy-deep) 100%);
+    color:var(--shell);
+    padding:38px 24px 0;
+  }
+  .header-inner{ max-width:1080px; margin:0 auto; }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--teal); margin:0 0 10px;
+  }
+  h1.title{
+    font-family:'Fraunces',serif; font-weight:600;
+    font-size:clamp(28px,4.4vw,42px); line-height:1.08;
+    margin:0 0 10px; letter-spacing:-0.01em;
+  }
+  .subtitle{
+    font-size:15px; color:#C7D6D2; max-width:640px;
+    margin:0 0 14px; line-height:1.5;
+  }
+  .updated-line{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:#9FB8B3;
+    margin:0 0 26px; display:flex; align-items:center; gap:7px;
+  }
+  .updated-dot{ width:6px; height:6px; border-radius:50%; background:var(--teal); display:inline-block; flex:0 0 auto; }
+  .waterline{ display:block; width:100%; height:10px; }
+  .waterline svg{ display:block; width:100%; height:10px; }
+
+  main{ max-width:1080px; margin:0 auto; padding:34px 24px 80px; }
+  .hidden{ display:none !important; }
+
+  .status-panel{ text-align:center; padding:70px 20px; color:var(--ink-soft); }
+  .status-panel .spinner{
+    width:28px; height:28px; border:3px solid var(--line); border-top-color:var(--teal);
+    border-radius:50%; margin:0 auto 18px; animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .status-panel .big{ font-family:'Fraunces',serif; font-size:19px; color:var(--ink); margin-bottom:8px; }
+  .status-panel .detail{ font-size:13.5px; max-width:440px; margin:0 auto; line-height:1.6; }
+  .status-panel .retry-btn{
+    margin-top:18px; background:var(--navy); color:var(--shell); border:none;
+    border-radius:100px; padding:10px 22px; font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px; cursor:pointer;
+  }
+  .status-panel .retry-btn:hover{ background:var(--navy-deep); }
+  @media (prefers-reduced-motion: reduce){ .status-panel .spinner{ animation:none; } }
+
+  .grid-intro{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .grid-intro h2{ font-family:'Fraunces',serif; font-size:20px; font-weight:600; margin:0; }
+  .grid-intro .count{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); }
+
+  .card-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+  .item-card{
+    background:var(--white); border:1px solid var(--line); border-top:3px solid var(--teal);
+    border-radius:var(--radius); padding:18px 18px 16px; text-align:left; cursor:pointer;
+    font-family:inherit; color:inherit; display:flex; flex-direction:column; gap:14px;
+    min-height:130px; box-shadow:var(--shadow);
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .item-card:hover, .item-card:focus-visible{
+    transform:translateY(-2px); border-top-color:var(--amber);
+    box-shadow:0 4px 8px rgba(21,44,52,0.08), 0 14px 28px rgba(21,44,52,0.09); outline:none;
+  }
+  .item-card:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+  .item-code{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--teal-dark); background:#EAF3F1; display:inline-block; padding:3px 8px; border-radius:4px; width:fit-content;
+  }
+  .item-name{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; line-height:1.25; flex:1; }
+  .item-count{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); display:flex; align-items:baseline; gap:6px; }
+  .item-count b{ font-size:22px; color:var(--ink); font-weight:600; }
+
+  .browse-toggle{ margin-top:30px; padding-top:22px; border-top:1px solid var(--line); text-align:center; }
+  .browse-toggle button{
+    background:none; border:1px solid var(--line); border-radius:100px; padding:10px 20px;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.03em; color:var(--teal-dark); cursor:pointer;
+  }
+  .browse-toggle button:hover{ border-color:var(--teal); background:#EAF3F1; }
+  .browse-toggle p{ margin:0 0 10px; font-size:13.5px; color:var(--ink-soft); }
+
+  .topic-note{ font-size:13.5px; color:var(--ink-soft); max-width:640px; margin:-8px 0 22px; line-height:1.5; }
+
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px; background:none; border:none;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.03em;
+    color:var(--teal-dark); cursor:pointer; padding:0; margin-bottom:18px;
+  }
+  .back-link:hover{ color:var(--amber-deep); }
+
+  .detail-header{
+    display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;
+    margin-bottom:22px; padding-bottom:18px; border-bottom:1px solid var(--line);
+  }
+  .detail-header h2{ font-family:'Fraunces',serif; font-size:clamp(22px,3vw,30px); font-weight:600; margin:0 0 4px; }
+  .detail-code{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--teal-dark); text-transform:uppercase; letter-spacing:0.08em; }
+  .detail-count{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+
+  .filter-bar{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    background:var(--shell-2); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:18px;
+  }
+  .filter-bar input[type="search"]{
+    flex:1 1 220px; min-width:160px; padding:9px 12px; border:1px solid var(--line);
+    border-radius:7px; font-family:'Inter',sans-serif; font-size:14px; background:var(--white); color:var(--ink);
+  }
+  .filter-bar select{
+    padding:9px 10px; border:1px solid var(--line); border-radius:7px;
+    font-family:'Inter',sans-serif; font-size:13.5px; background:var(--white); color:var(--ink); cursor:pointer;
+  }
+  .filter-bar input:focus, .filter-bar select:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+  .clear-btn{
+    background:none; border:1px solid var(--line); border-radius:7px; padding:9px 12px;
+    font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-soft); cursor:pointer;
+  }
+  .clear-btn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+
+  .result-line{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; }
+
+  .table-wrap{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.06em;
+    text-transform:uppercase; color:var(--shell); background:var(--navy); padding:11px 14px;
+    cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  thead th:hover{ background:var(--navy-deep); }
+  thead th .arrow{ opacity:0.5; margin-left:4px; font-size:10px; }
+  thead th.active .arrow{ opacity:1; color:var(--teal); }
+
+  tbody tr{ border-bottom:1px solid var(--line); }
+  tbody tr:last-child{ border-bottom:none; }
+  tbody tr:hover{ background:#FAF8F2; }
+  tbody td{ padding:13px 14px; font-size:14px; line-height:1.45; vertical-align:top; }
+  td.q-cell{ max-width:400px; color:var(--ink); }
+  td.strategy-cell{ color:var(--ink-soft); font-size:13px; max-width:210px; }
+  td.strategy-cell .is-code{
+    display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+    letter-spacing:0.05em; text-transform:uppercase; color:var(--teal-dark); margin-bottom:2px;
+  }
+  td.meta-cell{ font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+
+  .pill{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    letter-spacing:0.03em; padding:3px 9px; border-radius:100px; white-space:nowrap;
+  }
+  .pill-top{ background:#F4E3C8; color:#8A5A18; }
+  .pill-high{ background:#F7EAD3; color:var(--amber-deep); }
+  .pill-medium{ background:#E3F0EE; color:var(--teal-dark); }
+  .pill-low{ background:#EFEBE0; color:#7A7259; }
+  .pill-none{ background:#EFEFEF; color:#8A8A8A; }
+
+  .empty-state{ padding:48px 20px; text-align:center; color:var(--ink-soft); }
+  .empty-state .big{ font-family:'Fraunces',serif; font-size:19px; color:var(--ink); margin-bottom:6px; }
+
+  @media (max-width: 720px){
+    .table-wrap{ border:none; background:none; box-shadow:none; }
+    table, thead, tbody, tr, td{ display:block; width:100%; }
+    thead{ display:none; }
+    tbody tr{
+      background:var(--white); border:1px solid var(--line); border-radius:var(--radius);
+      margin-bottom:12px; padding:14px; box-shadow:var(--shadow);
+    }
+    tbody td{ padding:4px 0; border:none; }
+    td.q-cell{ font-family:'Fraunces',serif; font-size:16px; font-weight:500; margin-bottom:8px; max-width:none; }
+    td.strategy-cell, td.meta-cell{ max-width:none; display:flex; gap:6px; align-items:flex-start; }
+    td.strategy-cell .is-code{ display:inline; margin:0; }
+    td[data-label]::before{
+      content: attr(data-label); font-family:'IBM Plex Mono',monospace; font-size:10px;
+      text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); flex:0 0 auto; width:78px;
+    }
+    .filter-bar{ flex-direction:column; align-items:stretch; }
+    .filter-bar select, .filter-bar input{ width:100%; }
+  }
+
+  footer.site{
+    max-width:1080px; margin:0 auto; padding:0 24px 60px;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to content</a>
+
+<header class="site">
+  <div class="header-inner">
+    <p class="eyebrow">Puget Sound Institute</p>
+    <h1 class="title">Grand Uncertainties Matrix</h1>
+    <p class="subtitle">A living catalog of open research questions standing in the way of Puget Sound recovery. Browse by implementation strategy, or by cross-cutting topic.</p>
+    <p class="updated-line"><span class="updated-dot" aria-hidden="true"></span><span id="updated-text">Last updated March 18, 2026</span></p>
+  </div>
+  <span class="waterline" aria-hidden="true">
+    <svg viewBox="0 0 400 10" preserveAspectRatio="none"><path d="M0,5 Q10,0 20,5 T40,5 T60,5 T80,5 T100,5 T120,5 T140,5 T160,5 T180,5 T200,5 T220,5 T240,5 T260,5 T280,5 T300,5 T320,5 T340,5 T360,5 T380,5 T400,5" fill="none" stroke="#4F9C93" stroke-width="1.4" opacity="0.65"/></svg>
+  </span>
+</header>
+
+<main id="main">
+
+  <section id="view-loading" class="status-panel">
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="big">Loading the latest uncertainties…</p>
+    <p class="detail">Pulling current data from the live spreadsheet.</p>
+  </section>
+
+  <section id="view-error" class="status-panel hidden">
+    <p class="big">Couldn't load the data</p>
+    <p class="detail" id="error-detail">The live spreadsheet feed didn't respond. Check your connection, or confirm the sheet is still published at File → Share → Publish to web.</p>
+    <button class="retry-btn" id="retry-btn">Try again</button>
+  </section>
+
+  <section id="view-strategies" class="hidden">
+    <div class="grid-intro">
+      <h2>Browse by implementation strategy</h2>
+      <span class="count" id="strategy-total-count"></span>
+    </div>
+    <div class="card-grid" id="strategy-grid"></div>
+    <div class="browse-toggle">
+      <p>Uncertainties can also cut across strategies.</p>
+      <button id="to-topics-btn">Browse instead by Topic &rarr;</button>
+    </div>
+  </section>
+
+  <section id="view-topic-list" class="hidden">
+    <div class="grid-intro">
+      <h2>Browse by topic</h2>
+      <span class="count" id="topic-total-count"></span>
+    </div>
+    <p class="topic-note">Topics are drawn from the spreadsheet's "Topic(s)" field, which authors could tag with one or several labels per question — so a question can appear under more than one topic here, and the counts below won't sum to the total question count.</p>
+    <div class="card-grid" id="topic-grid"></div>
+    <div class="browse-toggle">
+      <p>Prefer the primary grouping?</p>
+      <button id="to-strategies-btn">Browse by Implementation Strategy &rarr;</button>
+    </div>
+  </section>
+
+  <section id="view-detail" class="hidden">
+    <button class="back-link" id="back-btn">&larr; Back</button>
+
+    <div class="detail-header">
+      <div>
+        <p class="detail-code" id="detail-code"></p>
+        <h2 id="detail-name"></h2>
+      </div>
+      <span class="detail-count" id="detail-count"></span>
+    </div>
+
+    <div class="filter-bar">
+      <input type="search" id="search-input" placeholder="Search questions…" aria-label="Search questions">
+      <select id="filter-category" aria-label="Filter by category"></select>
+      <select id="filter-priority" aria-label="Filter by priority"></select>
+      <select id="filter-timeframe" aria-label="Filter by timeframe"></select>
+      <button class="clear-btn" id="clear-filters">Clear filters</button>
+    </div>
+
+    <p class="result-line" id="result-line"></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="question">Question <span class="arrow">↕</span></th>
+            <th data-key="strategy_name">Strategy <span class="arrow">↕</span></th>
+            <th data-key="category">Category <span class="arrow">↕</span></th>
+            <th data-key="priority">Priority <span class="arrow">↕</span></th>
+            <th data-key="timeframe">Timeframe <span class="arrow">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div class="empty-state hidden" id="empty-state">
+        <p class="big">No uncertainties match these filters</p>
+        <p>Try clearing a filter or adjusting your search.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  Data: Grand Uncertainties Matrix (public), Puget Sound Institute — synced live from Google Sheets. "Chinook" placeholder rows excluded.
+</footer>
+
+<script>
+(function(){
+
+  var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBROzNNap9eplN9rxaq4oWz74yH9naRFV2LhSS20dI3cb8Wj9LWP2M68dpuCa5TQ/pub?gid=425196818&single=true&output=csv";
+
+  var LAST_UPDATED_DISPLAY = "Last updated March 18, 2026";
+  document.getElementById('updated-text').textContent = LAST_UPDATED_DISPLAY;
+
+  function parseCSV(text){
+    var rows = [], row = [], field = '', inQuotes = false, i = 0, len = text.length;
+    while(i < len){
+      var c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+          else { inQuotes = false; i++; continue; }
+        } else { field += c; i++; continue; }
+      } else {
+        if(c === '"'){ inQuotes = true; i++; continue; }
+        else if(c === ','){ row.push(field); field=''; i++; continue; }
+        else if(c === '\r'){ i++; continue; }
+        else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+        else { field += c; i++; continue; }
+      }
+    }
+    if(field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function csvToObjects(text){
+    var rows = parseCSV(text);
+    if(rows.length === 0) return [];
+    var headers = rows[0];
+    var out = [];
+    for(var r=1; r<rows.length; r++){
+      var rowArr = rows[r];
+      if(rowArr.length === 1 && rowArr[0].trim() === '') continue;
+      var obj = {};
+      for(var c=0; c<headers.length; c++){ obj[headers[c]] = rowArr[c] !== undefined ? rowArr[c] : ''; }
+      out.push(obj);
+    }
+    return out;
+  }
+
+  var CANONICAL_TOPICS = [
+    'Administration','Climate Change','Communication','Cost-Benefit Analysis','Decision Support',
+    'Economics','Ecosystem function/processes','Effectiveness','Governance','Habitat','Human Behavior','Human Health',
+    'Hydrology','Incentives','Land Use Planning','Mapping/Spatial','Modeling','Monitoring','Ocean Acidification',
+    'Prioritization','Regulation','Riparian','Shellfish','Stormwater','Other',
+    'PCBs','PBDEs','PAHs','CECs','6PPD-Q','Microplastics','Wastewater','Groundwater','Status and Trends',
+    'Exposure/Uptake','Fate and Transport','Chemical Identification','Chemical Prioritization','Sources',
+    'Loading and Pathways','Biological Impacts','Human Behavior (including how chemicals are utilized)',
+    'Environmental Justice','Spatial','Methodologies','Pollution Prevention'
+  ];
+  var CANONICAL_MAP = {};
+  CANONICAL_TOPICS.forEach(function(c){
+    var base = c.split(' (')[0].trim();
+    CANONICAL_MAP[base.toLowerCase()] = base;
+  });
+
+  function splitTopics(raw){
+    if(!raw) return [];
+    var tmp = raw.replace(/(?<=\s)\/(?=\s)/g, ',');
+    return tmp.split(',').map(function(p){ return p.trim(); }).filter(Boolean);
+  }
+
+  function buildTopicCasingMap(records){
+    var counts = {};
+    records.forEach(function(r){
+      splitTopics(r['Topic(s)']).forEach(function(p){
+        var key = p.toLowerCase();
+        if(!counts[key]) counts[key] = {};
+        counts[key][p] = (counts[key][p]||0) + 1;
+      });
+    });
+    var display = {};
+    Object.keys(counts).forEach(function(key){
+      if(CANONICAL_MAP[key]){ display[key] = CANONICAL_MAP[key]; return; }
+      var best=null, bestCount=-1;
+      Object.keys(counts[key]).forEach(function(casing){
+        if(counts[key][casing] > bestCount){ best = casing; bestCount = counts[key][casing]; }
+      });
+      display[key] = best;
+    });
+    return display;
+  }
+
+  function clean(v){
+    if(v === undefined || v === null) return null;
+    var s = String(v).trim();
+    return s.length ? s : null;
+  }
+
+  function transformRecords(csvObjects){
+    var withQuestion = csvObjects.filter(function(r){ return clean(r['Question']); });
+    var casingMap = buildTopicCasingMap(withQuestion);
+
+    var records = withQuestion.map(function(r){
+      var priority = clean(r['Priority Level (within IS)']);
+      if(priority && priority.toLowerCase() === 'low') priority = 'Low';
+
+      var pieces = splitTopics(r['Topic(s)']);
+      var seen = [];
+      pieces.forEach(function(p){
+        var name = casingMap[p.toLowerCase()] || p;
+        if(seen.indexOf(name) === -1) seen.push(name);
+      });
+
+      return {
+        question: clean(r['Question']),
+        id: clean(r['ID']),
+        strategy_code: clean(r['Implementation Strategy']),
+        strategy_name: clean(r['Strategy Name']),
+        category: clean(r['Category']),
+        timeframe: clean(r['Timeframe to Resolve']),
+        status: clean(r['Uncertainty Status']),
+        priority: priority,
+        date_added: clean(r['Date Added']),
+        topics: seen
+      };
+    });
+
+    return records.filter(function(r){ return r.strategy_code && r.strategy_code !== 'Chinook'; });
+  }
+
+  var viewLoading = document.getElementById('view-loading');
+  var viewError = document.getElementById('view-error');
+  var viewStrategies = document.getElementById('view-strategies');
+  var viewTopicList = document.getElementById('view-topic-list');
+  var viewDetail = document.getElementById('view-detail');
+  var ALL_VIEWS = [viewLoading, viewError, viewStrategies, viewTopicList, viewDetail];
+
+  function showOnly(view){
+    ALL_VIEWS.forEach(function(v){ v.classList.toggle('hidden', v !== view); });
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  document.getElementById('retry-btn').addEventListener('click', boot);
+
+  function boot(){
+    showOnly(viewLoading);
+    fetch(CSV_URL, {cache:'no-store'})
+      .then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function(text){
+        var objs = csvToObjects(text);
+        var records = transformRecords(objs);
+        if(records.length === 0) throw new Error('No usable rows in feed');
+        initApp(records);
+      })
+      .catch(function(err){
+        document.getElementById('error-detail').textContent =
+          "The live spreadsheet feed didn't respond (" + err.message + "). Check your connection, or confirm the sheet is still published at File → Share → Publish to web.";
+        showOnly(viewError);
+      });
+  }
+
+  function initApp(records){
+    var strategyNames = {
+      'BIBI': 'Benthic Index of Biotic Integrity (B-IBI)',
+      'Chinook': 'Chinook Salmon',
+      'Estuaries': 'Estuaries',
+      'Floodplains': 'Floodplains',
+      'LDC': 'Land Development and Cover',
+      'Marine Veg': 'Marine Vegetation',
+      'MWQ': 'Marine Water Quality',
+      'Shellfish': 'Shellfish Beds',
+      'Shoreline Armoring': 'Shoreline Armoring',
+      'Toxics in Fish': 'Toxics in Fish'
+    };
+    var strategyOrder = ['BIBI','Estuaries','Floodplains','LDC','Marine Veg','MWQ','Shellfish','Shoreline Armoring','Toxics in Fish'];
+
+    var strategyCounts = {};
+    records.forEach(function(r){ strategyCounts[r.strategy_code] = (strategyCounts[r.strategy_code]||0) + 1; });
+
+    document.getElementById('strategy-total-count').textContent =
+      records.length + ' questions across ' + strategyOrder.filter(function(c){return strategyCounts[c];}).length + ' strategies';
+
+    var strategyGrid = document.getElementById('strategy-grid');
+    strategyGrid.innerHTML = '';
+    strategyOrder.forEach(function(code){
+      if(!strategyCounts[code]) return;
+      var card = document.createElement('button');
+      card.className = 'item-card';
+      card.innerHTML =
+        '<span class="item-code">' + code + '</span>' +
+        '<span class="item-name">' + escapeHtml(strategyNames[code] || code) + '</span>' +
+        '<span class="item-count"><b>' + strategyCounts[code] + '</b> question' + (strategyCounts[code]===1?'':'s') + '</span>';
+      card.addEventListener('click', function(){ openStrategy(code); });
+      strategyGrid.appendChild(card);
+    });
+
+    var topicMap = {};
+    records.forEach(function(r){
+      (r.topics||[]).forEach(function(t){
+        if(!topicMap[t]) topicMap[t] = [];
+        topicMap[t].push(r);
+      });
+    });
+    var topicNames = Object.keys(topicMap).sort(function(a,b){
+      return topicMap[b].length - topicMap[a].length || a.localeCompare(b);
+    });
+
+    document.getElementById('topic-total-count').textContent = topicNames.length + ' topics';
+
+    var topicGrid = document.getElementById('topic-grid');
+    topicGrid.innerHTML = '';
+    topicNames.forEach(function(name){
+      var count = topicMap[name].length;
+      var card = document.createElement('button');
+      card.className = 'item-card';
+      card.innerHTML =
+        '<span class="item-name">' + escapeHtml(name) + '</span>' +
+        '<span class="item-count"><b>' + count + '</b> question' + (count===1?'':'s') + '</span>';
+      card.addEventListener('click', function(){ openTopic(name); });
+      topicGrid.appendChild(card);
+    });
+
+    document.getElementById('to-topics-btn').onclick = function(){ showOnly(viewTopicList); };
+    document.getElementById('to-strategies-btn').onclick = function(){ showOnly(viewStrategies); };
+
+    var state = { mode:null, key:null, sortKey:'priority', sortDir:'asc', search:'', category:'', priority:'', timeframe:'' };
+    var activeBaseRecords = [];
+
+    document.getElementById('back-btn').onclick = function(){
+      showOnly(state.mode === 'topic' ? viewTopicList : viewStrategies);
+    };
+
+    function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
+
+    function populateSelect(el, values, label){
+      el.innerHTML = '<option value="">' + label + ': all</option>' +
+        values.map(function(v){ return '<option value="'+escapeAttr(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function escapeAttr(s){ return escapeHtml(s); }
+
+    var priorityRank = {'Top':0,'High':1,'Medium':2,'Low':3,'No priority':4};
+
+    function openStrategy(code){
+      openDetail({ mode:'strategy', key:code, records: records.filter(function(r){ return r.strategy_code === code; }),
+        codeLabel: code, nameLabel: strategyNames[code] || code });
+    }
+    function openTopic(name){
+      openDetail({ mode:'topic', key:name, records: topicMap[name] || [], codeLabel:'Topic', nameLabel:name });
+    }
+
+    function openDetail(cfg){
+      state.mode = cfg.mode; state.key = cfg.key;
+      state.search=''; state.category=''; state.priority=''; state.timeframe='';
+      state.sortKey='priority'; state.sortDir='asc';
+      document.getElementById('search-input').value = '';
+      activeBaseRecords = cfg.records;
+
+      document.getElementById('detail-code').textContent = cfg.codeLabel;
+      document.getElementById('detail-name').textContent = cfg.nameLabel;
+      document.getElementById('back-btn').textContent = '← ' + (cfg.mode === 'topic' ? 'All topics' : 'All strategies');
+
+      populateSelect(document.getElementById('filter-category'), uniqueSorted(activeBaseRecords.map(function(r){return r.category;})), 'Category');
+      populateSelect(document.getElementById('filter-priority'), uniqueSorted(activeBaseRecords.map(function(r){return r.priority;})), 'Priority');
+      populateSelect(document.getElementById('filter-timeframe'), uniqueSorted(activeBaseRecords.map(function(r){return r.timeframe;})), 'Timeframe');
+
+      showOnly(viewDetail);
+      render();
+    }
+
+    function applyFilters(list){
+      var s = state.search.trim().toLowerCase();
+      return list.filter(function(r){
+        if(s && !(r.question||'').toLowerCase().includes(s)) return false;
+        if(state.category && r.category !== state.category) return false;
+        if(state.priority && r.priority !== state.priority) return false;
+        if(state.timeframe && r.timeframe !== state.timeframe) return false;
+        return true;
+      });
+    }
+
+    function applySort(list){
+      var key = state.sortKey, dir = state.sortDir === 'asc' ? 1 : -1;
+      var copy = list.slice();
+      copy.sort(function(a,b){
+        var av, bv;
+        if(key === 'priority'){
+          av = priorityRank[a.priority] === undefined ? 99 : priorityRank[a.priority];
+          bv = priorityRank[b.priority] === undefined ? 99 : priorityRank[b.priority];
+        } else {
+          av = (a[key]||'').toString().toLowerCase();
+          bv = (b[key]||'').toString().toLowerCase();
+        }
+        if(av < bv) return -1*dir;
+        if(av > bv) return 1*dir;
+        return 0;
+      });
+      return copy;
+    }
+
+    function pillClass(p){
+      if(p === 'Top') return 'pill pill-top';
+      if(p === 'High') return 'pill pill-high';
+      if(p === 'Medium') return 'pill pill-medium';
+      if(p === 'Low') return 'pill pill-low';
+      return 'pill pill-none';
+    }
+
+    function render(){
+      var filtered = applyFilters(activeBaseRecords);
+      var sorted = applySort(filtered);
+
+      document.getElementById('detail-count').textContent = activeBaseRecords.length + ' total';
+      document.getElementById('result-line').textContent =
+        'Showing ' + sorted.length + ' of ' + activeBaseRecords.length + ' question' + (activeBaseRecords.length===1?'':'s');
+
+      var tbody = document.getElementById('table-body');
+      var emptyState = document.getElementById('empty-state');
+
+      if(sorted.length === 0){
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        tbody.innerHTML = sorted.map(function(r){
+          return '<tr>' +
+            '<td class="q-cell">' + escapeHtml(r.question || '') + '</td>' +
+            '<td class="strategy-cell" data-label="Strategy"><span class="is-code">' + escapeHtml(r.strategy_code || '') + '</span>' + escapeHtml(r.strategy_name || '—') + '</td>' +
+            '<td class="meta-cell" data-label="Category">' + escapeHtml(r.category || '—') + '</td>' +
+            '<td class="meta-cell" data-label="Priority">' + (r.priority ? '<span class="'+pillClass(r.priority)+'">'+escapeHtml(r.priority)+'</span>' : '—') + '</td>' +
+            '<td class="meta-cell" data-label="Timeframe">' + escapeHtml(r.timeframe || '—') + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      document.querySelectorAll('thead th').forEach(function(th){
+        th.classList.toggle('active', th.dataset.key === state.sortKey);
+        var arrow = th.querySelector('.arrow');
+        arrow.textContent = th.dataset.key === state.sortKey ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
+      });
+    }
+
+    document.getElementById('search-input').addEventListener('input', function(e){ state.search = e.target.value; render(); });
+    document.getElementById('filter-category').addEventListener('change', function(e){ state.category = e.target.value; render(); });
+    document.getElementById('filter-priority').addEventListener('change', function(e){ state.priority = e.target.value; render(); });
+    document.getElementById('filter-timeframe').addEventListener('change', function(e){ state.timeframe = e.target.value; render(); });
+    document.getElementById('clear-filters').addEventListener('click', function(){
+      state.search=''; state.category=''; state.priority=''; state.timeframe='';
+      document.getElementById('search-input').value='';
+      document.getElementById('filter-category').value='';
+      document.getElementById('filter-priority').value='';
+      document.getElementById('filter-timeframe').value='';
+      render();
+    });
+    document.querySelectorAll('thead th').forEach(function(th){
+      th.addEventListener('click', function(){
+        var key = th.dataset.key;
+        if(state.sortKey === key){ state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; }
+        else { state.sortKey = key; state.sortDir = 'asc'; }
+        render();
+      });
+    });
+
+    showOnly(viewStrategies);
+  }
+
+  boot();
+
+})();
+</script>
+
+</body>
+</html>
