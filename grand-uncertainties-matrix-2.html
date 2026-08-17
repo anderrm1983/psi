@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#152C34;
+    --purple:#4B2E82;
     --navy-deep:#0E1F25;
     --teal:#4F9C93;
     --teal-dark:#356F68;
@@ -39,12 +39,12 @@
 
   .skip-link{
     position:absolute; left:-999px; top:0;
-    background:var(--white); color:var(--navy); padding:10px 16px; z-index:100;
+    background:var(--white); color:var(--purple); padding:10px 16px; z-index:100;
   }
   .skip-link:focus{left:8px; top:8px;}
 
   header.site{
-    background:linear-gradient(180deg,var(--navy) 0%, var(--navy-deep) 100%);
+    background:linear-gradient(180deg,var(--purple) 0%, var(--navy-deep) 100%);
     color:var(--shell);
     padding:38px 24px 0;
   }
@@ -83,7 +83,7 @@
   .status-panel .big{ font-family:'Fraunces',serif; font-size:19px; color:var(--ink); margin-bottom:8px; }
   .status-panel .detail{ font-size:13.5px; max-width:440px; margin:0 auto; line-height:1.6; }
   .status-panel .retry-btn{
-    margin-top:18px; background:var(--navy); color:var(--shell); border:none;
+    margin-top:18px; background:var(--purple); color:var(--shell); border:none;
     border-radius:100px; padding:10px 22px; font-family:'IBM Plex Mono',monospace;
     font-size:12.5px; cursor:pointer;
   }
@@ -165,7 +165,7 @@
   table{ width:100%; border-collapse:collapse; }
   thead th{
     text-align:left; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.06em;
-    text-transform:uppercase; color:var(--shell); background:var(--navy); padding:11px 14px;
+    text-transform:uppercase; color:var(--shell); background:var(--purple); padding:11px 14px;
     cursor:pointer; user-select:none; white-space:nowrap;
   }
   thead th:hover{ background:var(--navy-deep); }
