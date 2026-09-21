@@ -186,7 +186,8 @@
   thead th .arrow{ opacity:0.5; margin-left:4px; font-size:10px; }
   thead th.active .arrow{ opacity:1; color:var(--teal); }
 
-  tbody tr{ border-bottom:1px solid var(--line); }
+  tbody tr{ border-bottom:1px solid var(--line); cursor:pointer; }
+  tbody tr:focus-visible{ outline:2px solid var(--teal); outline-offset:-2px; }
   tbody tr:last-child{ border-bottom:none; }
   tbody tr:hover{ background:#FAF8F2; }
   tbody td{ padding:13px 14px; font-size:14px; line-height:1.45; vertical-align:top; }
@@ -230,6 +231,47 @@
     .filter-bar{ flex-direction:column; align-items:stretch; }
     .filter-bar select, .filter-bar input{ width:100%; }
   }
+
+  td.id-cell{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.02em; }
+
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(14,31,37,0.55);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:40px 16px; z-index:200; overflow-y:auto;
+  }
+  .modal-panel{
+    background:var(--white); border-radius:14px; max-width:680px; width:100%;
+    padding:32px 30px 34px; box-shadow:0 20px 60px rgba(14,31,37,0.35);
+    position:relative; margin-bottom:40px;
+  }
+  .modal-close-btn{
+    position:absolute; top:16px; right:16px; width:32px; height:32px;
+    border:1px solid var(--line); border-radius:50%; background:var(--white);
+    color:var(--ink-soft); font-size:18px; line-height:1; cursor:pointer;
+  }
+  .modal-close-btn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .modal-eyebrow-row{ display:flex; gap:8px; margin-bottom:12px; padding-right:36px; }
+  .modal-id-badge{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--teal-dark); background:#EAF3F1; padding:3px 9px; border-radius:100px;
+  }
+  .modal-question{
+    font-family:'Fraunces',serif; font-size:clamp(20px,3vw,26px); font-weight:600;
+    line-height:1.3; margin:0 0 6px; padding-right:36px;
+  }
+  .modal-strategy-name{ font-size:13.5px; color:var(--ink-soft); margin:0 0 18px; }
+  .modal-topics{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px; }
+  .modal-topics .topic-chip{
+    display:inline-block; background:var(--shell-2); border-radius:100px;
+    padding:4px 11px; font-size:12px; color:var(--ink-soft);
+  }
+  .modal-field{ padding:14px 0; border-top:1px solid var(--line); }
+  .modal-field-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--ink-soft); margin-bottom:5px;
+  }
+  .modal-field-value{ font-size:14px; line-height:1.55; color:var(--ink); }
+  .modal-field-value.pre{ white-space:pre-line; }
 
   footer.site{
     max-width:1080px; margin:0 auto; padding:0 24px 60px;
@@ -311,7 +353,6 @@
 
     <div class="filter-bar">
       <input type="search" id="search-input" placeholder="Search questions…" aria-label="Search questions">
-      <select id="filter-category" aria-label="Filter by category"></select>
       <select id="filter-priority" aria-label="Filter by priority"></select>
       <select id="filter-timeframe" aria-label="Filter by timeframe"></select>
       <button class="clear-btn" id="clear-filters">Clear filters</button>
@@ -325,7 +366,7 @@
           <tr>
             <th data-key="question">Question <span class="arrow">↕</span></th>
             <th data-key="strategy_name">Strategy <span class="arrow">↕</span></th>
-            <th data-key="category">Category <span class="arrow">↕</span></th>
+            <th data-key="id">ID <span class="arrow">↕</span></th>
             <th data-key="priority">Priority <span class="arrow">↕</span></th>
             <th data-key="timeframe">Timeframe <span class="arrow">↕</span></th>
           </tr>
@@ -344,6 +385,13 @@
 <footer class="site">
   Data: Grand Uncertainties Matrix (public), Puget Sound Institute — synced live from Google Sheets. "Chinook" placeholder rows excluded.
 </footer>
+
+<div class="modal-backdrop hidden" id="detail-modal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-label="Question details">
+    <button class="modal-close-btn" id="modal-close-btn" aria-label="Close">&times;</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -460,9 +508,16 @@
         strategy_name: clean(r['Strategy Name']),
         category: clean(r['Category']),
         timeframe: clean(r['Timeframe to Resolve']),
+        source: clean(r['Source of Question/Uncertainty']),
         status: clean(r['Uncertainty Status']),
         priority: priority,
         date_added: clean(r['Date Added']),
+        prioritization_source: clean(r['Prioritization Source']),
+        latest_prioritization_date: clean(r['Latest Prioritization Date']),
+        status_notes: clean(r['Status and Prioritization Notes']),
+        research_notes: clean(r['Research Notes']),
+        research_review_date: clean(r['Research Review Date']),
+        general_notes: clean(r['General Notes']),
         topics: seen
       };
     });
@@ -575,8 +630,9 @@
       openSearch(globalSearchInput.value);
     });
 
-    var state = { mode:null, key:null, sortKey:'priority', sortDir:'asc', search:'', category:'', priority:'', timeframe:'' };
+    var state = { mode:null, key:null, sortKey:'priority', sortDir:'asc', search:'', priority:'', timeframe:'' };
     var activeBaseRecords = [];
+    var lastRenderedSorted = [];
 
     document.getElementById('back-btn').onclick = function(){
       showOnly(state.mode === 'topic' ? viewTopicList : viewStrategies);
@@ -613,7 +669,7 @@
 
     function openDetail(cfg, initialSearch){
       state.mode = cfg.mode; state.key = cfg.key;
-      state.search = initialSearch || ''; state.category=''; state.priority=''; state.timeframe='';
+      state.search = initialSearch || ''; state.priority=''; state.timeframe='';
       state.sortKey='priority'; state.sortDir='asc';
       document.getElementById('search-input').value = state.search;
       activeBaseRecords = cfg.records;
@@ -623,7 +679,6 @@
       document.getElementById('back-btn').textContent = '← ' +
         (cfg.mode === 'topic' ? 'All topics' : cfg.mode === 'search' ? 'Home' : 'All strategies');
 
-      populateSelect(document.getElementById('filter-category'), uniqueSorted(activeBaseRecords.map(function(r){return r.category;})), 'Category');
       populateSelect(document.getElementById('filter-priority'), uniqueSorted(activeBaseRecords.map(function(r){return r.priority;})), 'Priority');
       populateSelect(document.getElementById('filter-timeframe'), uniqueSorted(activeBaseRecords.map(function(r){return r.timeframe;})), 'Timeframe');
 
@@ -635,7 +690,6 @@
       var s = state.search.trim().toLowerCase();
       return list.filter(function(r){
         if(s && !(r.question||'').toLowerCase().includes(s)) return false;
-        if(state.category && r.category !== state.category) return false;
         if(state.priority && r.priority !== state.priority) return false;
         if(state.timeframe && r.timeframe !== state.timeframe) return false;
         return true;
@@ -669,9 +723,74 @@
       return 'pill pill-none';
     }
 
+    function fieldBlock(label, value, pre){
+      if(!value) return '';
+      var cls = pre ? 'modal-field-value pre' : 'modal-field-value';
+      return '<div class="modal-field"><div class="modal-field-label">' + escapeHtml(label) + '</div><div class="' + cls + '">' + escapeHtml(value) + '</div></div>';
+    }
+
+    function buildModalHtml(r){
+      var html = '';
+      html += '<div class="modal-eyebrow-row">';
+      if(r.id){ html += '<span class="modal-id-badge">' + escapeHtml(r.id) + '</span>'; }
+      if(r.strategy_code){ html += '<span class="modal-id-badge">' + escapeHtml(r.strategy_code) + '</span>'; }
+      html += '</div>';
+      html += '<h3 class="modal-question">' + escapeHtml(r.question || '') + '</h3>';
+      if(r.strategy_name){ html += '<p class="modal-strategy-name">' + escapeHtml(r.strategy_name) + '</p>'; }
+
+      if(r.topics && r.topics.length){
+        html += '<div class="modal-topics">' + r.topics.map(function(t){
+          return '<span class="topic-chip">' + escapeHtml(t) + '</span>';
+        }).join('') + '</div>';
+      }
+
+      html += fieldBlock('Timeframe to resolve', r.timeframe);
+      html += fieldBlock('Source of question/uncertainty', r.source);
+      html += fieldBlock('Date added', r.date_added);
+      html += fieldBlock('Uncertainty status', r.status);
+      if(r.priority){
+        html += '<div class="modal-field"><div class="modal-field-label">Priority level</div><div class="modal-field-value"><span class="' + pillClass(r.priority) + '">' + escapeHtml(r.priority) + '</span></div></div>';
+      }
+      html += fieldBlock('Prioritization source', r.prioritization_source);
+      html += fieldBlock('Latest prioritization date', r.latest_prioritization_date);
+      html += fieldBlock('Status and prioritization notes', r.status_notes, true);
+      html += fieldBlock('Research notes', r.research_notes, true);
+      html += fieldBlock('Research review date', r.research_review_date);
+      html += fieldBlock('General notes', r.general_notes, true);
+
+      return html;
+    }
+
+    var modalBackdrop = document.getElementById('detail-modal');
+    var modalBody = document.getElementById('modal-body');
+
+    function openQuestionModal(r){
+      if(!r) return;
+      modalBody.innerHTML = buildModalHtml(r);
+      modalBackdrop.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('modal-close-btn').focus();
+    }
+    function closeQuestionModal(){
+      modalBackdrop.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('modal-close-btn').addEventListener('click', closeQuestionModal);
+    modalBackdrop.addEventListener('click', function(e){
+      if(e.target === modalBackdrop) closeQuestionModal();
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && !modalBackdrop.classList.contains('hidden')) closeQuestionModal();
+    });
+
     function render(){
       var filtered = applyFilters(activeBaseRecords);
       var sorted = applySort(filtered);
+
+      if(state.mode === 'search'){
+        var q = (state.search || '').trim();
+        document.getElementById('detail-name').textContent = q ? '“' + q + '”' : 'All questions';
+      }
 
       document.getElementById('detail-count').textContent = activeBaseRecords.length + ' total';
       document.getElementById('result-line').textContent =
@@ -685,11 +804,12 @@
         emptyState.classList.remove('hidden');
       } else {
         emptyState.classList.add('hidden');
-        tbody.innerHTML = sorted.map(function(r){
-          return '<tr>' +
+        lastRenderedSorted = sorted;
+        tbody.innerHTML = sorted.map(function(r, idx){
+          return '<tr tabindex="0" role="button" aria-label="View full details" data-idx="' + idx + '">' +
             '<td class="q-cell">' + escapeHtml(r.question || '') + '</td>' +
             '<td class="strategy-cell" data-label="Strategy"><span class="is-code">' + escapeHtml(r.strategy_code || '') + '</span>' + escapeHtml(r.strategy_name || '—') + '</td>' +
-            '<td class="meta-cell" data-label="Category">' + escapeHtml(r.category || '—') + '</td>' +
+            '<td class="meta-cell id-cell" data-label="ID">' + escapeHtml(r.id || '—') + '</td>' +
             '<td class="meta-cell" data-label="Priority">' + (r.priority ? '<span class="'+pillClass(r.priority)+'">'+escapeHtml(r.priority)+'</span>' : '—') + '</td>' +
             '<td class="meta-cell" data-label="Timeframe">' + escapeHtml(r.timeframe || '—') + '</td>' +
           '</tr>';
@@ -703,14 +823,24 @@
       });
     }
 
+    document.getElementById('table-body').addEventListener('click', function(e){
+      var tr = e.target.closest('tr');
+      if(!tr || !tr.dataset || tr.dataset.idx === undefined) return;
+      openQuestionModal(lastRenderedSorted[tr.dataset.idx]);
+    });
+    document.getElementById('table-body').addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var tr = e.target.closest('tr');
+      if(!tr || !tr.dataset || tr.dataset.idx === undefined) return;
+      e.preventDefault();
+      openQuestionModal(lastRenderedSorted[tr.dataset.idx]);
+    });
     document.getElementById('search-input').addEventListener('input', function(e){ state.search = e.target.value; render(); });
-    document.getElementById('filter-category').addEventListener('change', function(e){ state.category = e.target.value; render(); });
     document.getElementById('filter-priority').addEventListener('change', function(e){ state.priority = e.target.value; render(); });
     document.getElementById('filter-timeframe').addEventListener('change', function(e){ state.timeframe = e.target.value; render(); });
     document.getElementById('clear-filters').addEventListener('click', function(){
-      state.search=''; state.category=''; state.priority=''; state.timeframe='';
+      state.search=''; state.priority=''; state.timeframe='';
       document.getElementById('search-input').value='';
-      document.getElementById('filter-category').value='';
       document.getElementById('filter-priority').value='';
       document.getElementById('filter-timeframe').value='';
       render();
