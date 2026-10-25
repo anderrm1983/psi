@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grand Uncertainties Matrix · Puget Sound Institute</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --purple:#4B2E82;
+    --navy-deep:#0E1F25;
+    --teal:#4F9C93;
+    --teal-dark:#356F68;
+    --tan:#C9BFA6;
+    --shell:#F7F5EF;
+    --shell-2:#EFEBE0;
+    --ink:#1F2A2E;
+    --ink-soft:#5B6B6E;
+    --amber:#C98A2E;
+    --amber-deep:#9C6A1E;
+    --line:#DCD5C4;
+    --white:#FFFFFF;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(21,44,52,0.06), 0 6px 20px rgba(21,44,52,0.05);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--shell);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+
+  .skip-link{
+    position:absolute; left:-999px; top:0;
+    background:var(--white); color:var(--purple); padding:10px 16px; z-index:100;
+  }
+  .skip-link:focus{left:8px; top:8px;}
+
+  header.site{
+    background:linear-gradient(180deg,var(--purple) 0%, var(--navy-deep) 100%);
+    color:var(--shell);
+    padding:38px 24px 0;
+  }
+  .header-inner{ max-width:1080px; margin:0 auto; }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--teal); margin:0 0 10px;
+  }
+  h1.title{
+    font-family:'Fraunces',serif; font-weight:600;
+    font-size:clamp(28px,4.4vw,42px); line-height:1.08;
+    margin:0 0 10px; letter-spacing:-0.01em;
+  }
+  .subtitle{
+    font-size:15px; color:#C7D6D2; max-width:640px;
+    margin:0 0 14px; line-height:1.5;
+  }
+  .updated-line{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:#9FB8B3;
+    margin:0 0 14px; display:flex; align-items:center; gap:7px;
+  }
+  .updated-dot{ width:6px; height:6px; border-radius:50%; background:var(--teal); display:inline-block; flex:0 0 auto; }
+  .waterline{ display:block; width:100%; height:10px; }
+  .waterline svg{ display:block; width:100%; height:10px; }
+
+  main{ max-width:1080px; margin:0 auto; padding:34px 24px 80px; }
+  .hidden{ display:none !important; }
+
+  .status-panel{ text-align:center; padding:70px 20px; color:var(--ink-soft); }
+  .status-panel .spinner{
+    width:28px; height:28px; border:3px solid var(--line); border-top-color:var(--teal);
+    border-radius:50%; margin:0 auto 18px; animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .status-panel .big{ font-family:'Fraunces',serif; font-size:19px; color:var(--ink); margin-bottom:8px; }
+  .status-panel .detail{ font-size:13.5px; max-width:440px; margin:0 auto; line-height:1.6; }
+  .status-panel .retry-btn{
+    margin-top:18px; background:var(--purple); color:var(--shell); border:none;
+    border-radius:100px; padding:10px 22px; font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px; cursor:pointer;
+  }
+  .status-panel .retry-btn:hover{ background:var(--navy-deep); }
+  @media (prefers-reduced-motion: reduce){ .status-panel .spinner{ animation:none; } }
+
+  .landing-search-wrap{ margin-bottom:28px; }
+  .landing-search{ display:flex; gap:10px; }
+  .landing-search input[type="search"]{
+    flex:1; padding:12px 16px; border:1px solid var(--line); border-radius:100px;
+    font-family:'Inter',sans-serif; font-size:15px; background:var(--white); color:var(--ink);
+    box-shadow:var(--shadow);
+  }
+  .landing-search input[type="search"]:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+  .landing-search-btn{
+    background:var(--purple); color:var(--shell); border:none; border-radius:100px;
+    padding:0 22px; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.03em; cursor:pointer;
+  }
+  .landing-search-btn:hover{ background:var(--navy-deep); }
+
+  .grid-intro{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .grid-intro h2{ font-family:'Fraunces',serif; font-size:20px; font-weight:600; margin:0; }
+  .grid-intro .count{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); }
+
+  .card-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+  .item-card{
+    background:var(--white); border:1px solid var(--line); border-top:3px solid var(--teal);
+    border-radius:var(--radius); padding:18px 18px 16px; text-align:left; cursor:pointer;
+    font-family:inherit; color:inherit; display:flex; flex-direction:column; gap:14px;
+    min-height:130px; box-shadow:var(--shadow);
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .item-card:hover, .item-card:focus-visible{
+    transform:translateY(-2px); border-top-color:var(--amber);
+    box-shadow:0 4px 8px rgba(21,44,52,0.08), 0 14px 28px rgba(21,44,52,0.09); outline:none;
+  }
+  .item-card:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+  .item-code{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--teal-dark); background:#EAF3F1; display:inline-block; padding:3px 8px; border-radius:4px; width:fit-content;
+  }
+  .item-name{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; line-height:1.25; flex:1; }
+  .item-count{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); display:flex; align-items:baseline; gap:6px; }
+  .item-count b{ font-size:22px; color:var(--ink); font-weight:600; }
+
+  .browse-toggle{ margin-top:30px; padding-top:22px; border-top:1px solid var(--line); text-align:center; }
+  .browse-toggle button{
+    background:none; border:1px solid var(--line); border-radius:100px; padding:10px 20px;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.03em; color:var(--teal-dark); cursor:pointer;
+  }
+  .browse-toggle button:hover{ border-color:var(--teal); background:#EAF3F1; }
+  .browse-toggle p{ margin:0 0 10px; font-size:13.5px; color:var(--ink-soft); }
+
+  .topic-note{ font-size:13.5px; color:var(--ink-soft); max-width:640px; margin:-8px 0 22px; line-height:1.5; }
+
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px; background:none; border:none;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.03em;
+    color:var(--teal-dark); cursor:pointer; padding:0; margin-bottom:18px;
+  }
+  .back-link:hover{ color:var(--amber-deep); }
+
+  .detail-header{
+    display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;
+    margin-bottom:22px; padding-bottom:18px; border-bottom:1px solid var(--line);
+  }
+  .detail-header h2{ font-family:'Fraunces',serif; font-size:clamp(22px,3vw,30px); font-weight:600; margin:0 0 4px; }
+  .detail-code{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--teal-dark); text-transform:uppercase; letter-spacing:0.08em; }
+  .detail-count{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+
+  .filter-bar{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    background:var(--shell-2); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:18px;
+  }
+  .filter-bar input[type="search"]{
+    flex:1 1 220px; min-width:160px; padding:9px 12px; border:1px solid var(--line);
+    border-radius:7px; font-family:'Inter',sans-serif; font-size:14px; background:var(--white); color:var(--ink);
+  }
+  .filter-bar select{
+    padding:9px 10px; border:1px solid var(--line); border-radius:7px;
+    font-family:'Inter',sans-serif; font-size:13.5px; background:var(--white); color:var(--ink); cursor:pointer;
+  }
+  .filter-bar input:focus, .filter-bar select:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+  .clear-btn{
+    background:none; border:1px solid var(--line); border-radius:7px; padding:9px 12px;
+    font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-soft); cursor:pointer;
+  }
+  .clear-btn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+
+  .result-line{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; }
+
+  .table-wrap{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.06em;
+    text-transform:uppercase; color:var(--shell); background:var(--purple); padding:11px 14px;
+    cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  thead th:hover{ background:var(--navy-deep); }
+  thead th .arrow{ opacity:0.5; margin-left:4px; font-size:10px; }
+  thead th.active .arrow{ opacity:1; color:var(--teal); }
+
+  tbody tr{ border-bottom:1px solid var(--line); cursor:pointer; }
+  tbody tr:focus-visible{ outline:2px solid var(--teal); outline-offset:-2px; }
+  tbody tr:last-child{ border-bottom:none; }
+  tbody tr:hover{ background:#FAF8F2; }
+  tbody td{ padding:13px 14px; font-size:14px; line-height:1.45; vertical-align:top; }
+  td.q-cell{ max-width:400px; color:var(--ink); }
+  td.strategy-cell{ color:var(--ink-soft); font-size:13px; max-width:210px; }
+  td.meta-cell{ font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+
+  .pill{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    letter-spacing:0.03em; padding:3px 9px; border-radius:100px; white-space:nowrap;
+  }
+  .pill-top{ background:#F4E3C8; color:#8A5A18; }
+  .pill-high{ background:#F7EAD3; color:var(--amber-deep); }
+  .pill-medium{ background:#E3F0EE; color:var(--teal-dark); }
+  .pill-low{ background:#EFEBE0; color:#7A7259; }
+  .pill-none{ background:#EFEFEF; color:#8A8A8A; }
+
+  .empty-state{ padding:48px 20px; text-align:center; color:var(--ink-soft); }
+  .empty-state .big{ font-family:'Fraunces',serif; font-size:19px; color:var(--ink); margin-bottom:6px; }
+
+  @media (max-width: 720px){
+    .table-wrap{ border:none; background:none; box-shadow:none; }
+    table, thead, tbody, tr, td{ display:block; width:100%; }
+    thead{ display:none; }
+    tbody tr{
+      background:var(--white); border:1px solid var(--line); border-radius:var(--radius);
+      margin-bottom:12px; padding:14px; box-shadow:var(--shadow);
+    }
+    tbody td{ padding:4px 0; border:none; }
+    td.q-cell{ font-family:'Fraunces',serif; font-size:16px; font-weight:500; margin-bottom:8px; max-width:none; }
+    td.strategy-cell, td.meta-cell{ max-width:none; display:flex; gap:6px; align-items:flex-start; }
+    td[data-label]::before{
+      content: attr(data-label); font-family:'IBM Plex Mono',monospace; font-size:10px;
+      text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); flex:0 0 auto; width:78px;
+    }
+    .filter-bar{ flex-direction:column; align-items:stretch; }
+    .filter-bar select, .filter-bar input{ width:100%; }
+    .filter-bar input[type="search"]{ flex:0 0 auto; }
+  }
+
+  td.id-cell{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.02em; }
+
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(14,31,37,0.55);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:40px 16px; z-index:200; overflow-y:auto;
+  }
+  .modal-panel{
+    background:var(--white); border-radius:14px; max-width:680px; width:100%;
+    padding:32px 30px 34px; box-shadow:0 20px 60px rgba(14,31,37,0.35);
+    position:relative; margin-bottom:40px;
+  }
+  .modal-close-btn{
+    position:absolute; top:16px; right:16px; width:32px; height:32px;
+    border:1px solid var(--line); border-radius:50%; background:var(--white);
+    color:var(--ink-soft); font-size:18px; line-height:1; cursor:pointer;
+  }
+  .modal-close-btn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .modal-eyebrow-row{ display:flex; gap:8px; margin-bottom:12px; padding-right:36px; }
+  .modal-id-badge{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--teal-dark); background:#EAF3F1; padding:3px 9px; border-radius:100px;
+  }
+  .modal-question{
+    font-family:'Fraunces',serif; font-size:clamp(20px,3vw,26px); font-weight:600;
+    line-height:1.3; margin:0 0 6px; padding-right:36px;
+  }
+  .modal-strategy-name{ font-size:13.5px; color:var(--ink-soft); margin:0 0 18px; }
+  .modal-topics{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px; }
+  .modal-topics .topic-chip{
+    display:inline-block; background:var(--shell-2); border-radius:100px;
+    padding:4px 11px; font-size:12px; color:var(--ink-soft);
+  }
+  .modal-field{ padding:14px 0; border-top:1px solid var(--line); }
+  .modal-field-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--ink-soft); margin-bottom:5px;
+  }
+  .modal-field-value{ font-size:14px; line-height:1.55; color:var(--ink); }
+  .modal-field-value.pre{ white-space:pre-line; }
+
+  .header-nav{ margin:0 0 26px; }
+  .header-link{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.35); color:var(--shell);
+    border-radius:100px; padding:6px 15px; font-family:'IBM Plex Mono',monospace; font-size:12px;
+    letter-spacing:0.03em; cursor:pointer;
+  }
+  .header-link:hover{ border-color:var(--teal); background:rgba(255,255,255,0.16); }
+
+  .cite-link{ color:var(--teal-dark); text-decoration:underline; text-decoration-style:dotted; text-underline-offset:3px; }
+  .cite-link:hover{ color:var(--amber-deep); text-decoration-style:solid; }
+  .cite-ext::after{ content:"\2197"; font-size:0.8em; margin-left:2px; }
+
+  .ref-list{ list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+  .ref-entry{
+    background:var(--white); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; box-shadow:var(--shadow); scroll-margin-top:24px;
+  }
+  .ref-entry.flash{ animation:refflash 2.6s ease; }
+  @keyframes refflash{ 0%{ background:#F4E3C8; } 100%{ background:var(--white); } }
+  @media (prefers-reduced-motion: reduce){ .ref-entry.flash{ animation:none; background:#FBF3E3; } }
+  .ref-text{ font-size:14px; line-height:1.55; overflow-wrap:anywhere; }
+  .ref-text a, .ref-license a{ color:var(--teal-dark); }
+  .ref-note{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); margin-top:8px; }
+  .ref-license{ margin-top:8px; }
+  .ref-license summary{ cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); }
+  .ref-license div{ font-size:12.5px; line-height:1.5; color:var(--ink-soft); margin-top:6px; overflow-wrap:anywhere; }
+  .ref-empty{ padding:36px 16px; text-align:center; color:var(--ink-soft); }
+
+  footer.site{
+    max-width:1080px; margin:0 auto; padding:0 24px 60px;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to content</a>
+
+<header class="site">
+  <div class="header-inner">
+    <img class="image_resized" style="float:right;margin-bottom:10px;margin-left:15px;width:150px;" src="https://www.pugetsoundinstitute.org/wp-content/themes/psi-bs5/assets/img/psi-square-logo.png" alt="Description">
+    <p class="eyebrow">Puget Sound Institute</p>
+    <h1 class="title">Grand Uncertainties Matrix</h1>
+    <p class="subtitle">The Grand Uncertainties Matrix (the "GUM") is a living catalog of the uncertainties, questions, and unknowns that hamper or impede Puget Sound recovery. Browse by implementation strategy, or by cross-cutting topic.</p>
+    <p class="updated-line"><span class="updated-dot" aria-hidden="true"></span><span id="updated-text">Last updated August 20, 2026</span></p>
+    <p class="header-nav"><button type="button" class="header-link hidden" id="nav-refs">References</button></p>
+  </div>
+  <span class="waterline" aria-hidden="true">
+    <svg viewBox="0 0 400 10" preserveAspectRatio="none"><path d="M0,5 Q10,0 20,5 T40,5 T60,5 T80,5 T100,5 T120,5 T140,5 T160,5 T180,5 T200,5 T220,5 T240,5 T260,5 T280,5 T300,5 T320,5 T340,5 T360,5 T380,5 T400,5" fill="none" stroke="#4F9C93" stroke-width="1.4" opacity="0.65"/></svg>
+  </span>
+</header>
+
+<main id="main">
+
+  <section id="view-loading" class="status-panel">
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="big">Loading the latest uncertainties…</p>
+    <p class="detail">Pulling current data from the live spreadsheet.</p>
+  </section>
+
+  <section id="view-error" class="status-panel hidden">
+    <p class="big">Couldn't load the data</p>
+    <p class="detail" id="error-detail">The live spreadsheet feed didn't respond. Check your connection, or confirm the sheet is still published at File → Share → Publish to web.</p>
+    <button class="retry-btn" id="retry-btn">Try again</button>
+  </section>
+
+  <section id="view-strategies" class="hidden">
+    <div class="landing-search-wrap">
+      <form id="global-search-form" class="landing-search" role="search">
+        <input type="search" id="global-search-input" placeholder="Search all questions by keyword…" aria-label="Search all questions">
+        <button type="submit" class="landing-search-btn">Search</button>
+      </form>
+    </div>
+    <div class="grid-intro">
+      <h2>Browse by implementation strategy</h2>
+      <span class="count" id="strategy-total-count"></span>
+    </div>
+    <div class="card-grid" id="strategy-grid"></div>
+    <div class="browse-toggle">
+      <p>Uncertainties can also cut across strategies.</p>
+      <button id="to-topics-btn">Browse instead by Topic &rarr;</button>
+    </div>
+  </section>
+
+  <section id="view-topic-list" class="hidden">
+    <div class="grid-intro">
+      <h2>Browse by topic</h2>
+      <span class="count" id="topic-total-count"></span>
+    </div>
+    <p class="topic-note">Topics are drawn from the spreadsheet's "Topic(s)" field, which authors could tag with one or several labels per question — so a question can appear under more than one topic here, and the counts below won't sum to the total question count.</p>
+    <div class="card-grid" id="topic-grid"></div>
+    <div class="browse-toggle">
+      <p>Prefer the primary grouping?</p>
+      <button id="to-strategies-btn">Browse by Implementation Strategy &rarr;</button>
+    </div>
+  </section>
+
+  <section id="view-detail" class="hidden">
+    <button class="back-link" id="back-btn">&larr; Back</button>
+
+    <div class="detail-header">
+      <div>
+        <p class="detail-code" id="detail-code"></p>
+        <h2 id="detail-name"></h2>
+      </div>
+      <span class="detail-count" id="detail-count"></span>
+    </div>
+
+    <div class="filter-bar">
+      <input type="search" id="search-input" placeholder="Search questions…" aria-label="Search questions">
+      <select id="filter-priority" aria-label="Filter by priority"></select>
+      <button class="clear-btn" id="clear-filters">Clear filters</button>
+    </div>
+
+    <p class="result-line" id="result-line"></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="question">Question <span class="arrow">↕</span></th>
+            <th data-key="strategy_name">Strategy <span class="arrow">↕</span></th>
+            <th data-key="id">ID <span class="arrow">↕</span></th>
+            <th data-key="priority">Priority <span class="arrow">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div class="empty-state hidden" id="empty-state">
+        <p class="big">No uncertainties match these filters</p>
+        <p>Try clearing a filter or adjusting your search.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-references" class="hidden">
+    <button class="back-link" id="refs-back-btn">&larr; Back</button>
+
+    <div class="detail-header">
+      <div>
+        <p class="detail-code">Sources</p>
+        <h2>References</h2>
+      </div>
+      <span class="detail-count" id="refs-count"></span>
+    </div>
+
+    <p class="topic-note">Sources cited in the question notes. In a question&rsquo;s detail view, citations that match an entry below link to the document when a link is available. For gray literature lacking a link, please contact the author of the Research Note or General Note in which the gray literature is cited.</p>
+
+    <div class="filter-bar">
+      <input type="search" id="refs-search" placeholder="Search references…" aria-label="Search references">
+      <button class="clear-btn" id="refs-clear">Clear</button>
+    </div>
+
+    <p class="result-line" id="refs-result-line"></p>
+    <ul class="ref-list" id="ref-list"></ul>
+  </section>
+
+</main>
+
+<footer class="site">
+  Data: Grand Uncertainties Matrix (public), Puget Sound Institute — synced live from Google Sheets. "Chinook" placeholder rows excluded.
+</footer>
+
+<div class="modal-backdrop hidden" id="detail-modal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-label="Question details">
+    <button class="modal-close-btn" id="modal-close-btn" aria-label="Close">&times;</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script id="references-snapshot" type="application/json">[["Afroz, M. D., Li, R., Muhammed, K., Anandhi, A., & Chen, G. (2021). Best management practices for sustaining agricultural production at Choctawhatchee Watershed in Alabama, USA, in response to climate change. Air, Soil, and Water Research, 14, 1-12. https://doi.org/10.1177/1178622121991789", "\"Best Management Practices for Sustaining Agricultural Production at Choctawhatchee Watershed in Alabama, USA, in Response to Climate Change\" is by Mahnaz Dil Afroz, Runwei Li, Khaleel Muhammed, Aavudai Anandhi, and Gang Chen and has a CC BY-NC 4.0 Attribution-NonCommercial 4.0 International Deed license (found at the following link: https://creativecommons.org/licenses/by-nc/4.0/). The article can be accessed at the following link: https://journals.sagepub.com/doi/10.1177/1178622121991789. The publication is summarized.", ""], ["Ahmed, A., Figueroa-Kaminsky, C., Gala, J., Mohamedali, T., Pelletier, G., & McCarthy, S. (2019a). Puget Sound Nutrient Source Reduction Project. Volume 1: Model updates and bounding scenarios (Publication No. 19-03-001). Environmental Assessment Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/SummaryPages/1903001.html", "", ""], ["Ahmed, A., Figueroa-Kaminsky, C., Gala, J., Mohamedali, T., Pelletier, G., & McCarthy, S. (2019b). Puget Sound Nutrient Source Reduction Project. Volume 1: Model updates and bounding scenarios Appendix J. ORCA buoys and moorings (Publication No. 19-03-001). Environmental Assessment Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/parts/1903001part15.pdf", "", ""], ["Alegbeleye, O. O., & Sant'Ana, A. S. (2020). Manure-borne pathogens as an important source of water contamination: An update on the dynamics of pathogen survival/transport as well as practical risk mitigation strategies. International Journal of Hygiene and Environmental Health, 227, 113524. https://doi.org/10.1016/j.ijheh.2020.113524", "", ""], ["American Farmland Trust, King Conservation District, & Whatcom Conservation District. (2021). Washington Discovery Farms South Puget Sound Project: Evaluating dry manure storage options for water quality protection across King County, WA. https://farmlandinfo.org/wp-content/uploads/sites/2/2021/08/South-Sound-Discovery-Farms-Operational-Report.pdf", "", ""], ["Americian Farmland Trust. (2026). An Agricultural Viability Action Plan for Puget Sound. https://farmland.org/files/puget-sound-ag-viability-action-plan_digital_final.pdf", "", "Cited in Research Note for FPE 38"], ["Bakke, P. D., Hrachovec, M., & Lynch, K. D. (2020). Hyporheic process restoration: Design and performance of an engineered streambed. Water, 12(2), 425. https://doi.org/10.3390/w12020425", "\"Hyporheic Process Restoration: Design and Performance of an Engineered Streambed\" is by Paul D. Bakke, Michael Hrachovec, and Katherine D. Lynch and has a CC BY 4.0 ATTRIBUTION 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by/4.0/). The article can be accessed at the following link: https://doi.org/10.3390/w12020425. The publication is summarized.", ""], ["Batker, D., Swedeen, P., Costanza, R., de la Torre, I., Boumans, R., & Bagstad, K. (2008). A new view of the Puget Sound economy: The economic value of nature's services in the Puget Sound Basin. Earth Economics. https://asfpm-library.s3-us-west-2.amazonaws.com/General/New_View_of_the_Puget_Sound_Economy.pdf", "", ""], ["Bilby, R., Johnson, A., Foltz, J. R., & Puls, A. L. (2022). Management implications from Pacific Northwest intensively monitored watersheds. Pacific Northwest Aquatic Monitoring Partnership. https://www.pnamp.org/document/15207", "", ""], ["Bremond, P., F. Grelot, and A.L. Agenais. (2013). Review Article: Economic evaluation of flood damage to agriculture – review and analysis of existing methods. Natural Hazards and Earth System Sciences. 13(10): 2493–2512. https://doi.org/10.5194/nhess-13-2493-2013", "", "Cited in Research Note for FPE 40"], ["Breslow, S.J., R. Warren, L. Nelson, and K. Woodward. (2021). Research and Monitoring Recommendations - A Resource to Support Floodplains by Design: Part 1. University of Washington, Bonneville Environmental Foundation, Department of Ecology, and Nature Conservancy. https://app.box.com/s/23xx0f24ezfo892fponcjrj8r75saclv", "", "Cited as a source for multiple FPE uncertainties"], ["Buck, S., Denton, G., Dodds, W., Fisher, J., Flemer, D., Hart, D., Parker, A., Porter, S., Rector, S., Steinman, A., Stevenson, J., Stoner, J., Tillman, D., Wang, S., Watson, V., & Welch, E. (2000). Nutrient criteria technical guidance manual: Rivers and streams. (EPA-822-B-00-002). Washington, DC: United States Environmental Protection Agency, Office of Water, Office of Science and Technology. Retrieved from https://permanent.fdlp.gov/LPS45973/2009_04_22_criteria_nutrient-guidance-rivers-rivers-streams-full.pdf", "", ""], ["Byrd, K.B. I. Woo, L. Hall, E. Pindilli, M. Moritsch, A. Good, S. De La Cruz, M. Davis, G. Nakai. (2024). Birdwatching preferences reveal synergies and tradeoffs among recreation, carbon, and fisheries ecosystem services in Pacific Northwest estuaries, USA. Ecosystem Services. 69:101656. https://doi.org/10.1016/j.ecoser.2024.101656.", "", "Cited in Research Note for FPE 13"], ["Center for the Blue Economy, TBD Economics, LLC, Cascadia Consulting Group, & The Caspian Group. (2023). Ecosystem services assessment in the Stillaguamish River Estuary. Written under contract for the Washington Department of Fish and Wildlife. https://static1.squarespace.com/static/589cc3ed9f74569b7b9ea94f/t/668ff27ca1744f40d8d12b8d/1720709758245/Stillaguamish+ES+Report+Final.pdf", "", ""], ["Center for the Blue Economy, TBD Economics, LLC, Cascadia Consulting Group, and The Caspian Group. (2023). Ecosystem Services Assessment in\nthe Stillaguamish River Estuary. Prepared for the Washington Department of Fisheries and Wildlife. https://static1.squarespace.com/static/589cc3ed9f74569b7b9ea94f/t/668ff27ca1744f40d8d12b8d/1720709758245/Stillaguamish+ES+Report+Final.pdf", "", "Cited in Research Note for FPE 13"], ["Clancy, M., I. Logan, J. Lowe, J. Johannessen, A. MacLennan, F.B. Van Cleve, J. Dillon, B. Lyons, R.\nCarman, P. Cereghino, B. Barnard, C. Tanner, D. Myers, R. Clark, J. White, C. A. Simenstad, M. Gilmer,\nand N. Chin. (2009). Management Measures for Protecting the Puget Sound Nearshore. Puget Sound\nNearshore Ecosystem Restoration Project Report No. 2009-01. Published by Washington Department of\nFish and Wildlife, Olympia, Washington. https://wdfw.wa.gov/sites/default/files/publications/02188/wdfw02188.pdf", "", "Cites as a source of mangement measures referenced in FPE 11"], ["Clary, J., Jones, J., Leisenring, M., Hobson, P., & Strecker, E. (2020). International Stormwater BMP Database: 2020 summary statistics (Project No. 4968). Prepared by Wright Water Engineers, Inc., Geosyntec Consultants, Inc., & Terraphase Engineering, Inc. Prepared for The Water Research Foundation. https://www.waterrf.org/system/files/resource/2020-11/DRPT-4968_0.pdf", "", ""], ["Climate Impacts Group. (2016). Climate Change Impacts on Puget Sound Floodplains. https://cig.uw.edu/wp-content/uploads/sites/2/2014/11/TNC_Floodplains_3_25_16_bothlogos.pdf", "", "Cited in Research Note for FPE 19"], ["Climate Impacts Group. (2021). Technical Guidance: Quantifying Climate Change Impacts. https://cig.uw.edu/wp-content/uploads/sites/2/2021/11/Technical-Guidance-Document-AddFormat-11292021.pdf", "", "Cited in Research Note for FPE 19"], ["Clinton, S. M., Hartman, J., Macneale, K. H., & Roy, A. H. (2022). Stream macroinvertebrate reintroductions: A cautionary approach for restored urban streams. Freshwater Science, 41(3), 507-520. https://doi.org/10.1086/721471", "", ""], ["Coastal Geologic Services, Inc. (2017). Beach Strategies phase 1 summary report: Identifying target beaches to restore and protect. Prepared for the Estuary and Salmon Restoration Program. https://salishsearestoration.org/wiki/File:CGS_ESRP_BeachStrategies_SummaryReport_20171025.pdf", "\"File:MacLennan et al 2017 beach strategies phase one summary.pdf\" is by salishsearestoration.org and has a CC BY-SA 3.0 ATTRIBUTION-SHAREALIKE 3.0 UNPORTED Deed license (found at the following link: https://creativecommons.org/licenses/by-sa/3.0/deed.en). The webpage can be accessed at the following link: https://salishsearestoration.org/wiki/File:CGS_ESRP_BeachStrategies_SummaryReport_20171025.pdf. The webpage is included in the reference citation for Coastal Geologic Services, Inc. (2017).", ""], ["Coastal Geologic Services, Inc. (2018). Long-term bluff recession rates in Puget Sound: Implications for the prioritization and design of restoration projects. Prepared by MacLennan, A., Johannessen, J., Waggoner, J., Waddington, J., & Lubeck, A. for the Estuary and Salmon Restoration Program. https://secure.rco.wa.gov/prism/search/ProjectSnapshotAttachmentData.aspx?id=332187", "", ""], ["Coastal Geologic Services, Inc. (2020). Cost Analysis Memo. Appendix 3 in Kinney, A., Johannessen, J., Fisher, M., Maverick, A., Øde-Giles, L., & Lane, B. (2021). Residential shoreline loan program feasibility study: Developing a new Shore Friendly incentive to help Puget Sound homeowners finance beach restoration and sea level rise adaptation. University of Washington Tacoma, Puget Sound Institute. https://www.eopugetsound.org/sites/default/files/features/resources/Appendix_3-CostAnalysisMemo.pdf", "", "Cited in Research Notes for SA 9."], ["Coastal Geologic Services. (2020). Beach Strategies for Puget Sound: Phase 2 summary report. Prepared by MacLennan, A., Lubeck, A., Ode-Giles, L., Johannessen, J., & Schlenger, P. (Environmental Science Associates) for the Estuary and Salmon Restoration Program of the Washington Department of Fish and Wildlife. https://salishsearestoration.org/wiki/File:CGS_ESRP_BeachStrategies_Phase2Report_Sept2020_revised.pdf", "\"File:CGS ESRP BeachStrategies Phase2Report Sept2020 revised.pdf\" is by salishsearestoration.org and has a CC BY-SA 3.0 ATTRIBUTION-SHAREALIKE 3.0 UNPORTED Deed license (found at the following link: https://creativecommons.org/licenses/by-sa/3.0/deed.en). The webpage can be accessed at the following link: https://salishsearestoration.org/wiki/File:CGS_ESRP_BeachStrategies_Phase2Report_Sept2020_revised.pdf. The webpage is included in the reference citation for Coastal Geologic Services (2020).", "Cited in Research Notes for SA 1, SA 2, and SA 4."], ["Confluence Environmental Company, Environmental Science Associates, Coastal Geologic Services, & Tulalip Tribes Natural Resources. (2019). 2019 Coastal streams and embayments prioritization along Puget Sound shores with a railroad: prioritization framework technical report. Prepared for Washington Department of Fish and Wildlife, Olympia, Washington, by Confluence, Seattle, Washington. https://app.box.com/file/1147578091643?s=hyvtr0qtnu1q23ih3a5hyzr29eaohbsd", "", "Cited in Research Note for FPE 6"], ["Cook, J., Jayakaran, A., Navickis-Brasch, A., White, F., & Larson-Pugh, L. (2023). Guidance for designing and evaluating behavior change programs: Final report. Washington State University Washington Stormwater Center and Evergreen StormH2O. https://www.ezview.wa.gov/Portals/_1962/Documents/SAM/Guidance%20for%20Designing%20and%20Evaluating%20Behavior%20Change%20Programs.pdf", "", ""], ["Cote, J. & Domanski, A. (2019). Benefit cost analysis of Shore Friendly practices in Island County. Prepared for Island County Department of Natural Resources by Blue Coast Engineering and ECONorthwest. https://pspwa.box.com/s/vk9bfynowxnwiesmpitsmnca71z8ahhz", "", ""], ["Cote, J.M., T. Sanderson, and E. Beamer. (2023). Puget Sound Channel Design Guidelines for Barrier Embayment Restoration. Prepared by Blue Coast Engineering LLC and Skagit River System Cooperative for the Estuary and Salmon Restoration Progra. PRISM Project #16-2283. https://salishsearestoration.org/w/images/4/43/20230205_BlueCoast_TidalChannels_ESRP_Final_Complied.pdf", "", "Cited in Research Note for FPE 6"], ["Davies, J.B. (2015). Economic analysis of the cost of flooding. Canadian Water Resources Journal. 41(1-2). https://www.tandfonline.com/doi/full/10.1080/07011784.2015.1055804", "", "Cited in Research Note for FPE 21"], ["Davis, M.J., K.L. Poppe, J.M. Rybczyk, E.E. Grossman, I. Woo, J.W. Chamberlin, M. Totman, W.T. Zackey, F. Leonetti, S. Shull, and S.E.W. De La Cruz. (2024). Vulnerability to Sea‑Level Rise Varies Among Estuaries and Habitat Types: Lessons Learned from a Network of Surface Elevation Tables in Puget Sound. Estuaries and Coasts. 47:1918-1940. https://doi.org/10.1007/s12237-024-01335-w", "", "Cited in Research Note for FPE 2.1"], ["DeGasperi, C. L., Sheibley, R. W., Lubliner, B., Larson, C. A., Song, K., & Fore, L. S. (2018). Stormwater Action Monitoring status and trends study of Puget Lowland ecoregion streams: Evaluation of the first year (2015) of monitoring data.  Prepared for Washington Department of Ecology Stormwater Action Monitoring program. Prepared by King County in collaboration with the Washington Department of Ecology, U.S. Geological Survey, and the Puget Sound Partnership. Science and Technical Support Section, Water and Land Resources Division, Seattle, Washington. https://your.kingcounty.gov/dnrp/library/2018/kcr2968/kcr2968.pdf", "", ""], ["Des Roches, S., Accola, K. L., Faulkner, H. S., Morgan, J. R., Perla, B. S., Metler, M., Dethier, M. N., & Toft, J. D. (2024). Shoreline restoration including armor removal and log placement affect ecosystem recovery through time. Restoration Ecology, 32(4), e14097. https://doi.org/10.1111/rec.14097", "\"Shoreline restoration including armor removal and log placement affect ecosystem recovery through time\" is by Simone Des Roches, Kerry L. Accola, Hannah S. Faulkner, Jason R. Morgan, Bianca S. Perla, Maria Metler, Megan N. Dethier, and Jason D. Toft and has a CC BY-NC-ND 4.0 ATTRIBUTION-NONCOMMERCIAL-NODERIVATIVES 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by-nc-nd/4.0/). The article can be accessed at the following link: https://doi.org/10.1111/rec.14097. The publication is summarized.", ""], ["Des Roches, S., LaFuente, J. R., Faulkner, H. S., Morgan, J. R., Perla, B. S., Metler, M., Dethier, M. N., & Toft, J. D. (2022). Shoreline armor removal can restore variability in intertidal ecosystems. Ecological Indicators, 140, 109056. https://doi.org/10.1016/j.ecolind.2022.109056", "\"Shoreline armor removal can restore variability in intertidal ecosystems\" is by Simone Des Roches, Juhi R. LaFuente, Hannah S. Faulkner, Jason R. Morgan, Bianca S. Perla, Maria Metler, Megan N. Dethier, and Jason D. Toft and has a CC BY-NC-ND 4.0 ATTRIBUTION-NONCOMMERCIAL-NODERIVATIVES 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by-nc-nd/4.0/). The article can be accessed at the following link: https://doi.org/10.1016/j.ecolind.2022.109056. The publication is summarized.", ""], ["Dethier, M. N., Toft, J., Faulkner, H., Leonetti, F., & Dawson, E. (2020). Railroad grade beach nourishment study. Final project report prepared for the Estuary and Salmon Restoration Program, Recreation and Conservation Office and Washington Department of Fish and Wildlife. https://salishsearestoration.org/wiki/File:Dethier_et_al_2020_snohomish_beach_nourishment_monitoring_report.pdf", "\"File:Dethier et al 2020 snohomish beach nourishment monitoring report.pdf\" is by salishsearestoration.org and has a CC BY-SA 3.0 ATTRIBUTION-SHAREALIKE 3.0 UNPORTED Deed license (found at the following link: https://creativecommons.org/licenses/by-sa/3.0/deed.en). The webpage can be accessed at the following link: https://salishsearestoration.org/wiki/File:Dethier_et_al_2020_snohomish_beach_nourishment_monitoring_report.pdf. The webpage is included in the reference citation for \"Railroad Grade Beach Nourishment Study\" by Dethier et al. (2020).", ""], ["Dethier, M. N., Toft, J., Faulkner, H., Weiner, H., Kaminsky, G., & Combs, B. (2020). Physical and biological impacts of an experimental bulkhead removal project at Edgewater Beach, South Puget Sound. Final Monitoring Report prepared for the Estuary and Salmon Restoration Program. https://salishsearestoration.org/wiki/File:Dethier_et_al_2020_Edgewater_beach_restoration_monitoring_report.pdf", "\"File:Dethier et al 2020 Edgewater beach restoration monitoring report.pdf\" is by salishsearestoration.org and has a CC BY-SA 3.0 ATTRIBUTION-SHAREALIKE 3.0 UNPORTED Deed license (found at the following link: https://creativecommons.org/licenses/by-sa/3.0/deed.en). The webpage can be accessed at the following link: https://salishsearestoration.org/wiki/File:Dethier_et_al_2020_Edgewater_beach_restoration_monitoring_report.pdf. The webpage is included in the reference citation for \"Physical and Biological Impacts of an Experimental Bulkhead Removal Project at Edgewater Beach, South Puget Sound\" by Dethier et al. (2020).", ""], ["Dinicola, R. S., Swarzenski, P. W., & Dougherty, J. (2011). Select inorganic and organic loadings to nearshore Liberty Bay, Puget Sound, Washington. In R. K. Takesue (Ed.), Hydrography of and biogeochemical inputs to Liberty Bay, a small urban embayment in Puget Sound, Washington: U.S. Geological Survey Scientific Investigations Report 2011-5152 (pp. 41-52). U.S. Geological Survey. https://doi.org/https://doi.org/10.3133/sir20115152", "", ""], ["Discussion of uPlastics in the environment and protocols for uPlastic ID (Q&A) [Workshop notes]. (2023). Seattle Aquarium.", "", ""], ["Dvorak, M., Kinney, A., & Tellez, A. (2021). Toxics in Fish Vital Sign Base Program Analysis. Puget Sound Institute, UW Tacoma. Appendix to: Washington Department of Ecology, Stormwater Strategic Initiative, Toxics in Fish Implementation Strategy: A path to reduce toxics in Puget Sound. Washington Department of Ecology, Washington Department of Commerce, Washington Stormwater Center, Puget Sound Institute, Puget Sound Partnership, Washington Department of Fish and Wildlife, Washington Environmental Council. https://www.pugetsoundinstitute.org/wp-content/uploads/2023/11/Final_TIF_BPA_04.30.21.pdf", "", ""], ["Environmental Science Associates, Department of Ecology, and Puget Sound Partnership. (2019). Floodplain Condition Assessment and Vital Sign Refinement. Tacoma, Washington. https://pspwa.box.com/s/syyetigeujes10ximfidccs6rauxd0zv.", "", "Cited in justification for resolution of FPE 18"], ["Environmental Science Associates, Environmental Science Associates PWA, Anchor QEA, Coastal Geologic Services, KPFF, & Pacific Survey and Engineering. (2012). Puget Sound Nearshore Ecosystem Restoration Project strategic restoration conceptual engineering  — Design report. Washington Department of Fish and Wildlife. https://wdfw.wa.gov/publications/02139", "", ""], ["Estuary & Salmon Restoration Program. (2020). Request for Learning Program project proposals (for 2021 Investment Plan). https://rco.wa.gov/wp-content/uploads/2020/03/ESRP_2020_Learning_RFP.pdf", "", ""], ["Evrard, R., James, C. A., Bogue, K., & Kinney, A. (2022). Puget Sound Stormwater Utility Fee and stormwater program budget dataset 2019–2020 (1st version) [Data files]. Prepared by Puget Sound Institute, University of Washington Tacoma. Distributed by ResearchWorks, University of Washington Libraries. https://doi.org/10.6069/CJN3-YG88.", "", ""], ["Evrard, R., Kinney, A., & Wright, C. W. (2024). Catalog of Incentive Programs that Compensate Landowners for Stewardship Activities in the Puget Sound Region. Puget Sound Institute, UW Tacoma. https://app.box.com/s/l1tw24xt8t5fwpygiztuogh1x73cihhv", "", ""], ["Evrard, R., Kinney, A., & Wright, C. W. (2024). Synthesis of Habitat Strategic Initiative Lead 2016-2023 investments for Puget Sound recovery. Prepared for the Habitat Strategic Initiative Lead by Puget Sound Institute. https://www.pugetsoundinstitute.org/wp-content/uploads/2024/03/Final_HSIL1.0_Synthesis_Report_03.25.24.pdf", "", ""], ["Faghin, N. & Angell, C. (2021). Marine Alternative Shoreline Training: Needs Assessment report. Prepared for Puget Sound National Estuary Program Habitat Strategic Initiative Grant. https://pspwa.box.com/s/3z71zx6sfh9myikocbdqxnxxlt7ed9nz", "", ""], ["Faghin, N. & von Reis Crooks, S. (2015). Shoreline technical assistance for homeowners in the Puget Sound region (Washington Sea Grant Technical Report WSG-TR 15-01). Washington Sea Grant, University of Washington. Prepared for the Puget Sound Partnership, Ecosystem Coordination Board Regulatory Subcommittee. https://wsg.washington.edu/wordpress/wp-content/uploads/Shoreline-Technical-Assistance-for-Homeowners.pdf", "", ""], ["Faghin, N., Angell, C., Fishman, S., & Litle, K. (2023). Protection and restoration of shoreline process: Training, integration of Green Shores for Homes and Shore Friendly. Washington Sea Grant. Prepared for Puget Sound National Estuary Program Habitat Strategic Initiative Grant. https://app.box.com/file/1574949374281", "", ""], ["Faulkner, H. F. (2019). Shoreline restoration monitoring in Puget Sound: Final Report (for Grant PC-00J907-01). Washington Department of Fish and Wildlife. Prepared for the Puget Sound Marine and Nearshore Grant Program. https://pspwa.box.com/s/xmigfvksn9oaq4a55tjiksa976g4i980", "", ""], ["Faulkner, H., Scott, T. L., & Thurston, R. L. (2018). WDFW Hydraulic Project Approval program Hood Canal Compliance Pilot – Puget Sound marine shoreline surveys. Prepared by the Washington Department of Fish and Wildlife for the Puget Sound Marine and Nearshore Grant Program. https://pspwa.box.com/s/84g3vpbokhgaypomfov689ggwc8zbw18", "", ""], ["Folkerts, K. (2021). Evaluating Critical Area Ordinance effectiveness: Mapping critical areas. Washington Department of Fish and Wildlife. Corrected final report for NTA 2016-0368. https://pspwa.app.box.com/s/l043a40hva7uame1m3rpi0nh022uvzvx/file/1147619239663", "", ""], ["Fonner, R., G. Izon, B.E. Feist, and K. Barnas. (2022). Capitalization of reduced flood risk into housing values following a floodplain restoration investment. Journal of Environmental Economics and Policy. 12(3): 305-323. https://www.tandfonline.com/doi/full/10.1080/21606544.2022.2136765", "", "Cited in Research Note for FPE 21"], ["Francis, T. B., Sullaway, G. H., Feist, B. E., Shelton, A. O., Chui, E., Daley, C., Frick, K. E., Tolimieri, N., Williams, G. D., & Samhouri, J. S. (2022). Equivocal associations between small-scale shoreline restoration and subtidal fishes in an urban estuary. Restoration Ecology, 30(8), e13652. https://repository.library.noaa.gov/view/noaa/49064", "\"Equivocal associations between small-scale shoreline restoration and subtidal fishes in an urban estuary\" is by Tessa B. Francis, Genoa H. Sullaway, Blake E. Feist, Andrew O. Shelton, Emily Chui, Caroline Daley, Kinsey E. Frick, Nick Tolimieri, Gregory D. Williams, and Jameal F. Samhouri and has a CC BY-NC 4.0 ATTRIBUTION-NONCOMMERCIAL 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by-nc/4.0/). The article can be accessed at the following link: https://doi.org/10.1111/rec.13652. The publication is summarized.", ""], ["Francis, T., & James, C. A. (2023). Puget Sound's Grand Uncertainties Matrix.  In J. Rice (Ed.), Encyclopedia of Puget Sound. University of Washington Tacoma Puget Sound Institute. https://www.eopugetsound.org/articles/puget-sounds-grand-uncertainties-matrix", "", ""], ["Friends of the San Juans. (2022). Changes in shoreline armoring in San Juan County, WA 2009-2019: Mapping, analysis and regulatory review. Prepared by Tina Whitman. Funded by the National Estuary Program and the Puget Sound Partnership NTA 2018-0828. Friday Harbor, WA. https://sanjuans.org/wp-content/uploads/2022/08/SanJuanCountyArmorChangeAnalysisandRegulatoryReviewProject_2022_FriendsoftheSanJuans.pdf", "", ""], ["Greene Economics. (2022). Technical memorandum: On-site septic systems regional loan program. To: Audrey Coyne, From: Gretchen Greene.", "", ""], ["Greene, C.M., E. Beamer, J. Chamberlin, G. Hood, M. Davis, K. Larsen, J. Anderson, R. Henderson, J. Hall, M. Pouley, T. Zackey, S. Hodgson, C. Ellings, and I. Woo. (2021). Landscape, density-dependent, and bioenergetic influences upon Chinook salmon in tidal delta habitats: Comparison of four Puget Sound estuaries. ESRP Report 13-1508. https://salishsearestoration.org/wiki/Evaluating_Salmon_Rearing_Limitations_in_River_Deltas", "", "Cited in Research Note for FPE 2"], ["Greene, C.M., J. Chamberlin, S. Munsch, J. Anderson, E. Beamer, L. Belleveau, A. Berger, A. Bratt, C. Ellings, K. Frick, J. Griffith, S. Hodgson, G. Hood, A. Kagley, R. Ladley, M. Liermann, P. Lisi, M. LeMoine, M. McHenry, M. Ramirez, C. Scofield, A. Shaffer, O. Stefankiv, J. Toft, M. Totman, S. Urion, and T. Zackey. (2024) Multi-scale assessment of population responses to estuary restoration for Puget Sound Chinook Salmon. ESRP Project # 18-2248. https://salishsearestoration.org/wiki/Chinook_Response_to_Estuary_Restoration", "", "Cited in Research Note for FPE 15"], ["Grigg, N.S. (2023). Comprehensive Flood Risk Assessment: State of the Practice. Hydrology. 10(2). https://www.mdpi.com/2306-5338/10/2/46", "", "Cited in Research Note for FPE 21"], ["Habitat Strategic Initiative. (2021a). Narrative - 2021 status update. Shoreline Armoring Implementation Strategy. Washington Department of Fish and Wildlife & Washington Department of Natural Resources. https://pspwa.box.com/v/PublicIS-ShoreArmoring", "", ""], ["Habitat Strategic Initiative. (2021b). Narrative- 2021 update. Floodplains and Estuaries Implementation Strategy. Washington Department of Fish and Wildlife & Washington Department of Natural Resources. https://pspwa.app.box.com/s/c4vjba1kffsbfb87b157c00btkfvz8tz", "", ""], ["Habitat Strategic Initiative. (2021c). Narrative - 2021 update. Land Development and Cover Implementation Strategy 2021 update. Washington Department of Fish and Wildlife & Washington Department of Natural Resources. https://pspwa.app.box.com/s/raton3e2tfsl0kezu4f4bizj2f5jh4pd", "", ""], ["Habitat Strategic Initiative. (2026a). Narrative. Marine Vegetation Implementation Strategy: Advancing conservation and recovery of Puget Sound kelp and seagrass habitats. Washington Department of Fish and Wildlife & Washington Department of Natural Resources. https://app.box.com/file/2213695369519?v=MarineVegISNarrative2026", "", ""], ["Habitat Strategic Initiative. (2026b). Narrative - 2026 update. Floodplains and Estuaries Implementation Strategy. Washington Department of Fish and Wildlife & Washington Department of Natural Resources.", "", ""], ["Haldeman, T., & Schmidt, W. (2022). Using community-based social marketing to reduce pet waste bacteria in streams. Social Marketing Quarterly, 28(2), 109-129. https://doi.org/10.1177/15245004221097696", "", ""], ["Hall, J. K. Ross, D. Arterburn, M. Krall, and P. Roni. (2019). Draft Protocol Recommendations for Evaluating Pocket Estuary and Embayment Habitats in Puget Sound: A Protocol for Reporting Pockey Estuary Common Indicator. Prepared by Cramer Fish Sciences for Puget Sound Partnership. https://pspwa.app.box.com/s/uf9kq73yz1sx6ukayqrb5qtdq2r3p086", "", "Cited in justification for resolution of FPE 1"], ["Hammond, B., G. Berardi, and R. Green. (2013). Resilience in Agriculture: Small- and Medium-Sized Farms in Northwest Washington State. Agroecology and Sustainable Food Systems. 37(3). https://www.tandfonline.com/doi/abs/10.1080/10440046.2012.746251", "", "Cited in Research Note for FPE 39"], ["Hawley, R.W. (2018). Making stream restoration more sustainable: A geomorphically, ecologically, and socioeconomically principled approach to bridge the practice with the science. BioScience, 68(7), 517-528. https://doi.org/10.1093/biosci/biy048", "\"Making Stream Restoration More Sustainable: A Geomorphically, Ecologically, and Socioeconomically Principled Approach to Bridge the Practice with the Science\" is by Robert J. Hawley and has a CC BY-NC 4.0 ATTRIBUTION-NONCOMMERCIAL 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by-nc/4.0/). The article can be accessed at the following link: https://doi.org/10.1093/biosci/biy048. The publication is summarized. © The Author(s) 2018. Published by Oxford University Press on behalf of the American Institute of Biological Sciences.", ""], ["Herrera Environmental Consultants, Inc. (2023). Island County 2023 shoreline armor survey - Approach and phase 1 results. Prepared for the Island County Marine Resources Committee by Lauren Ode-Giles and Andrea MacLennan. https://www.islandcountymrc.org/media/21287/20240205-island-county-shoreline-armoring-survey-2023.pdf", "", ""], ["Hood, W.G. (2020). Applying tidal landform scaling to habitat restoration planning, design, and monitoring. Estuarine, Coastal & Shelf Science. 244. https://doi.org/10.1111/j.ecss.2018.12.017", "", "Cited in Research Note for FPE 16"], ["Hood, W.G. (2023). Distribution of Large Woody Debris in River Delta Tidal Marshes: Implications for Habitat Restoration. Estuaries and Coasts. 46:109-127. https://doi.org/10.1007/s12237-022-01122-5", "", "Cited in Research Note for FPE 16"], ["Hopkins, K. G., Woznicki, S. A., Williams, B. M., Stillwell, C. C., Naibert, E., Metes, M. J., Jones, D. K., Hogan, D. M., Hall, N. C., Fanelli, R. M., & Bhaskar, A. S. 2022. Lessons learned from 20 y of monitoring suburban development with distributed stormwater management in Clarksburg, Maryland, USA. Freshwater Science, 41(3), 459-476. https://doi.org/10.1086/719360", "\"Lessons learned from 20 y of monitoring suburban development with distributed stormwater management in Clarksburg, Maryland, USA\" is by Kristina G. Hopkins, Sean A. Woznicki, Brianna M. Williams, Charles C. Stillwell, Eric Naibert, Marina J. Metes, Daniel K. Jones, Dianna M. Hogan, Natalie C. Hall, Rosemary M. Fanelli, and Aditi S. Bhaskar and has a CC BY-NC 4.0 ATTRIBUTION-NONCOMMERCIAL 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by-nc/4.0/deed.en). The article can be accessed at the following link: https://doi.org/10.1086/719360. The publication is summarized.", ""], ["Industrial Economics, Incorporated. (2023). Residential marine shoreline armoring cost database and cost-gap analysis. Industrial Economics, Incorporated. Prepared for the Washington State Department of Fish and Wildlife. https://pspwa.box.com/s/4cndnfddswlmzgpythl82deq7qacsco3", "", ""], ["Isaksen, P. & Jackson, M. (2019). Current status of on-site sewage systems in King County: Location, age, and failure mapping project. Public Health — Seattle & King County. https://your.kingcounty.gov/dnrp/library/2019/kcr3059/kcr3059-rpt.pdf", "", ""], ["ITRC (Interstate Technology & Regulatory Council). (2024). 6PPD & 6PPD-quinone. Interstate Technology & Regulatory Council, Tire Anti-degradant (6PPD) Team. Washington, D.C. https://6ppd.itrcweb.org/", "", ""], ["James, C. A. (2022). State of Knowledge Report for the Marine Water Quality Implementation Strategy, Review Draft, October 2022. Puget Sound Institute, University of Washington.", "", ""], ["James, C. A., Sofield, R., Faber, M., Wark, D., Simmons, A., Harding, L., & O'Neill, S. (2023). The screening and prioritization of contaminants of emerging concern in the marine environment based on multiple biological response measures. Science of the Total Environment, 886, 163712. https://doi.org/10.1016/j.scitotenv.2023.163712", "“The screening and prioritization of contaminants of emerging concern in the marine environment based on multiple biological response measures” is by C. Andrew James, Ruth Sofield, Maya Faber, Dave Wark, Amy Simmons, Louisa Harding, and Sandra O’Neill and has a CC BY-NC 4.0 Attribution-NonCommercial 4.0 International Deed license (found here: https://creativecommons.org/licenses/by-nc/4.0/). The article can be accessed at the following link: https://doi.org/10.1016/j.scitotenv.2023.163712. Portions of the publication are summarized or quoted.", ""], ["Khangaonkar, T., Xu, W., Nugraha, A., & Balaguru, K. (2018). Simulation of response to climate change and sea level rise scenarios (PNNL-27276). Pacific Northwest National Laboratory. Prepared for Climate Preparedness and Resilience Program. https://www.pnnl.gov/media/PNNL-27276.pdf", "", ""], ["King County, Herrera Environmental Consultants, Robin Kirschbaum Inc., & HDR, Inc. (2022). Water Quality Benefits Evaluation Action fact sheets. https://publicinput.com/Customer/File/Full/01be400f-a038-4e06-b76b-a6bfb8570828", "", ""], ["King County. (2015). Strategies for protecting and restoring Puget Sound B-IBI basins. Prepared by Jo Opdyke Wilhelm, Kate Macneale, Chris Gregersen, Chris Knutson, and Debra Bouchard. Water and Land Resources Division. Seattle, Washington. https://your.kingcounty.gov/dnrp/library/2015/kcr2693/kcr2693-rpt.pdf", "", ""], ["King County. (2017). Monitoring stormwater retrofits in the Echo Lake drainage basin – SAM effectiveness study – Final report. Prepared by Carly Greyell, Water and Land Resources Division. Seattle, Washington. https://www.ezview.wa.gov/Portals/_1962/Documents/SAM/KC-EchoLakeRetrofitMonitoring_FinalReport.pdf", "", ""], ["King County. (2019). Effectiveness monitoring of the South 356th Street retrofit and expansion project, Federal Way, WA – SAM effectiveness study. Prepared by Kate Macneale and Carly Greyell, Water and Land Resources Division. Seattle, Washington. https://your.kingcounty.gov/dnrp/library/2019/kcr3020/kcr3020-Report.pdf", "", "Cited in Research Notes for B-IBI 2 and B-IBI 6."], ["King County. (2019). Stressor identification and recommended actions for restoring and protecting select Puget Lowland stream basins. Prepared by Kate Macneale and Beth Sosik, Water and Land Resources Division. Seattle, Washington. https://your.kingcounty.gov/dnrp/library/2019/kcr3098/kcr3098.pdf", "", "Cited in Research Notes for B-IBI 3 and B-IBI 17."], ["King County. (2020). Bug seeding: A possible jump-start to stream recovery. Prepared by Kate Macneale, Water and Land Resources Division. Seattle, Washington. https://your.kingcounty.gov/dnrp/library/2020/kcr3137/kcr3137.pdf", "", ""], ["King County. (2022). Forestry impacts to biotic integrity in forested stream basins. Prepared by Elizabeth Sosik, Water and Land Resources Division. Seattle, Washington. https://your.kingcounty.gov/dnrp/library/2022/kcr3438/kcr3438.pdf", "", ""], ["King County. (2023). The impact of urban development on stream macroinvertebrate communities is influenced by when that development occurred. Prepared by Kate Macneale, Water and Land Resources Division. Seattle, Washington. https://your.kingcounty.gov/dnrp/library/2023/kcr3452.pdf", "", ""], ["King-Heiden, T. (2021, February 5). It's a matter of time: Delayed toxic responses in fathead minnow larvae following chronic exposure to environmentally relevant concentrations of thiamethoxam [Workshop presentation]. Toxics in Puget Sound Red Flags Workshop, Puyallup, WA, United States. https://pspwa.app.box.com/s/m4ww5rzli8fdl4u10dwb0p3rrfi05p20/file/900070680808", "", ""], ["Kinney, A. (2018). Shoreline armoring Vital Sign base program analysis. Puget Sound Institute, University of Washington Tacoma. https://www.pugetsoundinstitute.org/wp-content/uploads/2023/11/Final_BPA_Shoreline_Armoring_04.30.18.pdf Appendix to Habitat Strategic Initiative. (2018). Shoreline armoring Implementation Strategy. Washington Department of Fish and Wildlife and Washington Department of Natural Resources.", "", ""], ["Kinney, A. & Francis, T. (2019). Analysis of 2016-2019 shoreline armoring investments: A review of Puget Sound Marine and Nearshore Grant Program results, part 4. Puget Sound Institute, University of Washington Tacoma. Tacoma, WA. https://www.pugetsoundinstitute.org/wp-content/uploads/2021/08/2019_Part-4-Analysis-Report_shoreline-armoring.pdf", "", ""], ["Kinney, A., Evrard, R., Bogue, K., & James, C. A. (2023). Filling the gap: A comparative analysis of stormwater utility fees and stormwater program budgets in the Puget Sound watershed. Journal of the American Water Resources Association, 59(5), 1128-1145. https://doi.org/10.1111/1752-1688.13123", "", ""], ["Kinney, A., James, C. A., Evrard, R., & Bogue, K. (2021). Use of stormwater utility fees in Puget Sound: Summary of implications for Implementation Strategies. Puget Sound Institute, University of Washington Tacoma. Tacoma, Washington. https://www.pugetsoundinstitute.org/wp-content/uploads/2023/11/Kinney-et-al_2021_Use-of-SUFs-Implications-for-Implementation-Strategies.pdf", "", "Cited in Research Notes for B-IBI 7 and B-IBI 25."], ["Kinney, A., Johannessen, J., Fisher, M., Maverick, A., Øde-Giles, L., & Lane, B. (2021). Residential shoreline loan program feasibility study: Developing a new Shore Friendly incentive to help Puget Sound homeowners finance beach restoration and sea level rise adaptation. University of Washington Tacoma, Puget Sound Institute. https://www.eopugetsound.org/articles/shoreline-loan-program-feasibility-study", "", "Cited in Research Notes for SA 23."], ["Liu,  T., Bruins, R. J. F., & Heberling, M. T. (2018). Factors influencing farmers' adoption of best management practices: A review and synthesis. Sustainability, 10(2), 432, https://doi.org/10.3390/su10020432", "\"Factors Influencing Farmers' Adoption of Best Management Practices: A Review and Synthesis\" is by Tingting Liu, Randall J. F. Bruins, and Matthew T. Heberling and has a CC BY 4.0 Attribution 4.0 International Deed license (found at the following link: https://creativecommons.org/licenses/by/4.0/). The article can be accessed at the following link: https://doi.org/10.3390/su10020432. The publication is summarized.", ""], ["Local management plans, § WAC 246-272A-0015 (2025). https://app.leg.wa.gov/WAC/default.aspx?cite=246-272A-0015&pdf=true", "", ""], ["Lowe, A.T., Kobelt, J., Horwith, M., & Ruesink, J. (2019). Ability of eelgrass to alter oyster growth and physiology is spatially limited and offset by increasing predation risk. Estuaries and Coasts, 42(3), 743-754. https://doi.org/10.1007/s12237-018-00488-9", "", ""], ["Lu, J., Ranjan, P., Floress, K., Arbuckle, J.G., Church, S. P., Eanes, F. R., Gao, Y., Gramig, B. M., Singh, A. S., & Prokopy, L. S. (2022). A meta-analysis of agricultural conservation intentions, behaviors, and practices: Insights from 35 years of quantitative literature in the United States. Journal of Environmental Management, 323, 116240. https://doi.org/10.1016/j.jenvman.2022.116240", "\"A meta-analysis of agricultural conservation intentions, behaviors, and practices: Insights from 35 years of quantitative literature in the United States\" is by Junyu Lu, Pranay Ranjan, Kristin Floress, J.G. Arbuckle, Sarah P. Church, Francis R. Eanes, Yuling Gao, Benjamin M. Gramig, Ajay S. Singh, and Linda S. Prokopy and has a CC BY-NC-ND 4.0 Attribution-NonCommercial-NoDerivatives 4.0 International Deed license (found at the following link: https://creativecommons.org/licenses/by-nc-nd/4.0/). The article can be accessed at the following link: https://doi.org/10.1016/j.jenvman.2022.116240. The publication is summarized.", ""], ["Magel, C.L. & Dorning, S.L. (2026). Marine Vegetation State of Knowledge Report. Puget Sound Institute, University of Washington Tacoma. https://www.pugetsoundinstitute.org/wp-content/uploads/2026/05/Magel-and-Dorning_2026_Marine-Vegetation-State-of-Knowledge_2026.04.20.pdf", "", ""], ["Mauger, G. S., Casola, J. H., Morgan, H. A., Strauch, R. L., Jones, B., Curry, B., Busch Isaksen, T. M., Whitely Binder, L., & Snover, A. K. (2015). State of knowledge: Climate change in Puget Sound. Report prepared for the Puget Sound Partnership and the National Oceanic and Atmospheric Administration. Climate Impacts Group, University of Washington. https://doi.org/10.7915/CIG93777D", "\"State of Knowledge: Climate Change in Puget Sound\" is by Guillaume S. Mauger, Joseph H. Casola, Harriet A. Morgan, Ronda L. Strauch, Brittany Jones, Beth Curry, Tania M. Busch Isaksen, Lara Whitely Binder, Meade B. Krosby, and Amy K. Snover and has a CC BY-SA 4.0 ATTRIBUTION-SHAREALIKE 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by-sa/4.0/). The report can be accessed at the following link: https://data.cig.uw.edu/picea/mauger/ps-sok/PS-SoK_2015.pdf. Portions of the report are summarized.", ""], ["Mauger, G.S. and H.M. Kennard. (2017). Integrating Climate Resilience in Flood Risk Management: A Work plan for the Washington Silver Jackets. Report prepared for FEMA. Climate Impacts Group, University of Washington, Seattle. https://cig.uw.edu/publications/integrating-climate-resilience-in-flood-risk-management-a-work-plan-for-the-washington-silver-jackets/", "", "Cited in Research Note for FPE 19"], ["Mauger, G.S., J. Robinson, R.J. Mitchell, J. Won, and N. Cristea. (2021). New Flood Projections\nfor Snohomish County: Fine-scale Modeling and Dynamically-Downscaling. Report\nprepared for Snohomish County. Climate Impacts Group, University of Washington.", "", "Cited in Research Note for FPE 19"], ["McAllister T. A., & Topp, E. (2012). Role of livestock in microbiological contaiminaton of water: Commonly the blame, but not always the source. Animal Frontiers, 2(2), 17-27. https://doi.org/10.2527/af.2012-0039", "\"Role of livestock in microbiological contamination of water: Commonly the blame, but not always the source\" is by T. A. McAllister and E. Topp and has a CC BY-NC 4.0 Attribution-NonCommercial 4.0 International Deed license (found at the following link: https://creativecommons.org/licenses/by-nc/4.0/). The report can be accessed at the following link: https://doi.org/10.2527/af.2012-0039. The publication is summarized.", ""], ["McCarthy, S. (2019a). Puget Sound nutrient synthesis report, Part 1: Nutrient projects funded by the National Estuary Program Toxics and Nutrients Prevention, Reduction, and Control Cooperative Agreement (Publication 19-03-016). Environmental Assessment Program, Washington State Department of Ecology. https://fortress.wa.gov/ecy/publications/SummaryPages/1903016.html", "", ""], ["McCarthy, S. (2019b). Puget Sound nutrient synthesis report, Part 2: Comparison of watershed nutrient load estimates (Publication 19-03-019). Environmental Assessment Program, Washington State Department of Ecology. https://fortress.wa.gov/ecy/publications/SummaryPages/1903019.html", "", "Cited in MWQ 11, MWQ 70, and elsewhere."], ["McCarthy, S., Figueroa-Kaminsky, C., Ahmed, A., Mohamedali, T., & Pelletier, G. (2018). Quality assurance project plan: Salish Sea Model applications (Publication No. 18-03-111). Environmental Assessment Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/SummaryPages/1803111.html", "", ""], ["McIntyre, J., Jayakaran, A., & Peter, K. (2022, July 14). Technical memorandum on aquatic toxicity of stormwater and role of 6PPD-quinone. In Environmental Assessment Program, & Water Quality Program, 6PPD in road runoff: Assessment and mitigation strategies (Publication 22-03-020) (Appendix D pp. 1-13). Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/summarypages/2203020.html", "", ""], ["Mohamed, R. (2009). Why households in the United States do not maintain their septic systems and why state-led regulations are necessary: Explanations from public goods theory. International Journal of Sustainable Development and Planning, 4(2), 143-157. https://doi.org/10.2495/SDP-V4-N2-143-157", "", ""], ["Mohamedali, T., Roberts, M., Sackmann, B., & Kolosseus, A. (2011). Puget Sound dissolved oxygen model nutrient load summary for 1999-2008 (Publication No. 11-03-057). Environmental Assessment Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/SummaryPages/1103057.html", "", "Cited in MWQ 11 and elsewhere."], ["Mohamedali, T., Roberts, M., Sackmann, B., Whiley, A., & Kolosseus, A. (2011). South Puget Sound dissolved oxygen study: Interim nutrient load summary for 2006-2007 (Publication No. 11-03-001). Environmental Assessment Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/SummaryPages/1103001.html", "", ""], ["Moritsch, M.M., K.B. Byrd, M. Davis, A. Good, J.Z. Drexler, J.T. Morris, I. Woo, L. Windham-Myers, E. Grossman, G. Nakai, K.L. Poppe, and J.M. Rybczyk. (2022). Can coastal habitats rise to the challenge? Resilience of estuarine habitats, carbon accumulation, and economic value to sea-Level rise in a Puget Sound estuary. Estuaries and Coasts. 45:2293-2309. https://doi.org/10.1007/s12237-022-01087-5", "", "Cited in Research Note for FPE 9 and FPE 13"], ["Morley, S.A., Rhodes, L. D., Baxter, A. E., Goetz, G. W., Wells, A. H., & Lynch, K. D. (2021). Invertebrate and microbial response to hyporheic restoration of an urban stream. Water, 13(4), 481. https://doi.org/10.3390/w13040481", "\"Invertebrate and Microbial Response to Hyporheic Restoration of an Urban Stream\" is by Sarah A. Morley, Linda D. Rhodes, Anne E. Baxter, Giles W. Goetz, Abigail H. Wells, and Katherine D. Lynch and has a CC BY 4.0 ATTRIBUTION 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by/4.0/). The article can be accessed at the following link: https://doi.org/10.3390/w13040481. The publication is summarized.", ""], ["Nantavisai, M., S. Hashimoto, and G. Meraj (2024). Unraveling changes in deltas: Exploring drivers and consequences through the lens of the IPBES conceptual framework. Science of The Total Environment. 952:175865. https://www.sciencedirect.com/science/article/pii/S0048969724060212", "", "Cited in Research Note for FPE 14"], ["Natural Resource Spatial Informatics Group. (2021). Washington State Agland Database. https://nrsig.org/projects/washington-state-agland-database", "", "Cited in justification for resolution of FPE 25"], ["Northern Economics, Inc. (2019). Appendix E: Assessing the benefits of critical areas. Prepared for Puget Sound Partnership Land Development & Cover Implementation Strategy Team. https://pspwa.app.box.com/s/8us8901fsl3c841lrod97t5du6rxybbe", "", ""], ["Northern Economics, Inc. (2019). Appendix E: Assessing the Benefits of Critical Areas. Prepared for Puget Sound Partnership Land Development & Cover Implementation Strategy Team. https://pspwa.app.box.com/s/8us8901fsl3c841lrod97t5du6rxybbe", "", "Cited in Research Note for FPE 14"], ["Northwest Indian Fisheries Commission. (2019). gw∂dzadad Teaching of Our Ancestors. https://nwtreatytribes.org/habitatstrategy/", "", ""], ["Oun, A., Kumar, A., Harrigan, T., Angelakis, A., & Xagoraraki, I. (2014). Effects of biosolids and manure application on microbial water quality in rural areas in the US. Water, 6(12), 3701-3723. https://doi.org/10.3390/w6123701", "\"Effects of Biosolids and Manure Application on Microbial Water Quality in Rural Areas in the US\" is by Amira Oun, Arun Kumar, Timothy Harrigan, Andreas Angelakis, and Irene Xagoraraki and has a CC BY 4.0 Attribution 4.0 International Deed license (found at the following link: https://creativecommons.org/licenses/by/4.0/). The article can be accessed at the following link: https://doi.org/10.3390/w6123701. The publication is summarized.", ""], ["Pacific Northwest Aquatic Monitoring Partnership. (2023, October 20). PNAMP Fish Monitoring Work Group Meeting (October 19, 2023) [Video]. YouTube. https://www.youtube.com/watch?v=IwdQgkIfjqc", "", ""], ["Pacific Northwest National Laboratory. (n.d.). Salish Sea Model. Pacific Northwest National Laboratory. https://salish-sea.pnnl.gov/SSM/model/water-quality/water-quality_overview.stm", "", ""], ["Palm-Forster, L.H. , Swinton, S.M., & Shupp, R.S. (2017). Farmer preferences for conservation incentives that promote voluntary phosphorus abatement in agricultural watersheds. Journal of Soil and Water Conservation, 72(5), 493–505. https://doi.org/10.2489/jswc.72.5.493", "", ""], ["Parsons, B., L. Marshall, M. Buckley, and J. Loos. (2020). Economic Outcomes of Urban Floodplain Restoration Implications for Puget Sound. Prepared by American Rivers and ECON Northwest. https://s3.amazonaws.com/american-rivers-website/wp-content/uploads/2020/06/05111836/AR-Economic-Outcomes-Report.pdf", "", "Cited in Research Note for FPE 34"], ["Paulson, A. J., Konrad, C. P., Frans, L. M., Noble, M., Kendall, C., Josberger, E. G., Huffman, R. L., & Olsen, T. D. (2006). Freshwater and saline loads of dissolved inorganic nitrogen to Hood Canal and Lynch Cove, Western Washington (Scientific Investigations Report 2006-5106). U.S. Geological Survey. https://doi.org/10.3133/sir20065106", "", ""], ["Peter, K. T., Herzog, S., Tian, Z., Wu, C., McCray, J. E., Lynch, K., & Kolodziej, E. P. (2019). Evaluating emerging organic contaminant removal in an engineered hyporheic zone using high resolution mass spectrometry. Water Research, 150, 140-152. https://doi.org/10.1016/j.watres.2018.11.050", "", ""], ["Peterson, H. (2019). State oversight of pollution identification and correction programs. Washington State Department of Health. https://nepatlas.pugetsoundinfo.wa.gov/Activity/Detail/1059", "", ""], ["PG Environmental. (2023). Research & recommendations for water quality trading for permittees under the Puget Sound Nutrient General Permit (Publication 23-10-006). Water Quality Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/summarypages/2310006.html", "", ""], ["Poppe, K.L. and J.M. Rybczyk. (2021). Tidal marsh restoration enhances sediment accretion and carbon acumulation in the Stillaguamish River estuary, Washington. PLOS One. 16(9): e0257244. https://doi.org/10.1371/journal.pone.0257244", "", "Cited in Research Note for FPE 13"], ["Puget Sound Federal Task Force. (2022). Puget Sound Federal Task Force Action Plan 2022-2026. U.S. Department of Transportation, U.S. Coast Guard, U.S. Environmental Protection Agency, U.S. Forest Service, U.S. Fish & Wildlife Service, National Oceanic and Atmospheric Administration, United States of America Department of the Navy, United States of America Bureau of Indian Affairs, U.S. Department of Homeland Security, FEMA, USGS, NRCS, & US Army Corps of Engineers. https://www.epa.gov/system/files/documents/2022-06/puget-sound-federal-task-force-action-plan-2022-2026.pdf", "", ""], ["Puget Sound floodplains condition assessment (n.d.). https://wa-psp.maps.arcgis.com/apps/Styler/index.html?appid=85aadc9497d84890a5137502051760b5", "", ""], ["Puget Sound Partnership and Washington Department of Fish and Wildlife. (2025). Puget Sound Levees Geodatabase. https://wa-psp.maps.arcgis.com/apps/instant/basic/index.html?appid=1fc1d4e84f734dea8c2e8c95c4889736", "", "Cited in justification for resolution of FPE 30"], ["Puget Sound Partnership. (n.d.). Agricultural Land Protections Progress Indicator. https://progressindicators.pugetsoundinfo.wa.gov/Topic/Detail/2", "", "Cited in justification for resolution of FPE 25"], ["Puget Sound Partnership. (n.d.). Estuary Area in Functional Condition Vital Sign Indicator. https://vitalsigns.pugetsoundinfo.wa.gov/VitalSignIndicator/Detail/65", "", "Cited in Research Note for FPE 2"], ["Puget Sound Partnership. (n.d.). Floodplain Function in Small and Large River Systems Vital Sign Indicator. https://vitalsigns.pugetsoundinfo.wa.gov/VitalSignIndicator/Detail/14", "", "Cited in justification for resolution of FPE 18 and FPE 30"], ["Rabourn, M. (n.d.). Strengthening STORM, improving local capacity to manage stormwater. King County. https://pugetsoundestuary.wa.gov/wp-content/uploads/2020/03/114849_884823_8-Factsheet.pdf", "", ""], ["Ramirez, M. and C. Simenstad. (2018). Protocol Recommendation for Tracking Estuary Extent and Restoration in Puget Sound: Designed for reporting on Chinook Salmon Recovery Common Indicators and Puget Sound Vital Sign Indicators. https://pspwa.app.box.com/s/llxsy7pxoikuyvki2zqxcgrefh97gwq2", "", "Cited in Research Note for FPE 2"], ["Raymond, C., Conway-Cranos, L. (T.), Morgan, H., Faghin, N., Spilsbury Pucci, D., Krienitz, J., Miller, I., Grossman, E., & Mauger, G. (2018). Sea level rise considerations for nearshore restoration projects in Puget Sound. A report prepared for the Washington Coastal Resilience Project. https://cig.uw.edu/wp-content/uploads/sites/2/2018/11/Raymondetal_SLR_Restoration_2018_Compressed.pdf", "", ""], ["Redman, S., Myers, D., Averill, D., Fresh, K., & Graeber, B. (2005). Regional nearshore and marine aspects of salmon recovery in Puget Sound. https://salishsearestoration.org/wiki/File:Redmond_et_al_2005_nearshore_salmon_recovery_plan.pdf", "\"File:Redmond et al 2005 nearshore salmon recovery plan.pdf\" is by salishsearestoration.org and has a CC BY-SA 3.0 ATTRIBUTION-SHAREALIKE 3.0 UNPORTED Deed license (found at the following link: https://creativecommons.org/licenses/by-sa/3.0/deed.en). The webpage can be accessed at the following link: https://salishsearestoration.org/wiki/File:Redmond_et_al_2005_nearshore_salmon_recovery_plan.pdf. The webpage is included in the reference citation for Redman et al. (2005).", ""], ["Roberts, M., Mohamedali, T., Sackmann, B., Khangaonkar, T., & Long, W. (2014). Puget Sound and the Straits dissolved oxygen assessment: Impacts of current and future human nitrogen sources and climate change through 2070 (Publication No. 14-03-007). Environmental Assessment Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/SummaryPages/1403007.html", "", ""], ["Roble, D. (2024). Public education & outreach: Behavior change campaign evaulation & report: Pet waste campaign. City of Mercer Island. https://www.mercerisland.gov/sites/default/files/fileattachments/parks_and_recreation/page/30623/behavior_change_report.pdf", "", ""], ["Ross Strategic, & Stormwater SIL. (2023). Next Steps for Visioning the Future of Wastewater in Puget Sound: Onsite Sewage Systems (OSS) Workshop. 08.24.2023. https://pspwa.app.box.com/s/42s6l370eh06jb04zxfdletteh3g27ie", "", ""], ["Ross Strategic. (2021). Regional perspectives on the effectiveness of Puget Sound shellfish recovery actions. Prepared for Washington State Department of Natural Resources (CONTRACT NO. 93-100602) and Puget Sound Partnership. https://www.eopugetsound.org/articles/regional-perspectives-effectiveness-puget-sound-shellfish-recovery-actions", "", ""], ["Salish Sea Marine Survival Project. (2023). Salish Sea Marine Survival Project transboundary workshop 2023. https://marinesurvivalproject.com/wp-content/uploads/LLTK_SSMSP_Transboundary-Workshop-2023_Final.pdf", "", ""], ["Schmitt, R.J.P. and P.S.J. Minderhaus. (2023). Data, knowledge, and modeling challenges for science-informed management of river deltas. One Earth. 6: 216-235. https://www.sciencedirect.com/science/article/pii/S2590332223000908", "", "Cited in Research Note for FPE 14"], ["SCJ Alliance. (2025). Septage Capacity Assessment. Prepared for the Washington State Association of Local Public Health Officials and the Department of Ecology. Publication Number 25-07-045. https://apps.ecology.wa.gov/publications/SummaryPages/2507045.html", "", "Cited in Research Notes for MWQ87 and Sh.9."], ["Senter, C. (2021, February 5). Assessment of existing data for groundwater quality in the Green - Duwamish watershed [Workshop presentation]. Toxics in Puget Sound Red Flags Workshop, Puyallup, WA, United States. https://pspwa.app.box.com/s/m4ww5rzli8fdl4u10dwb0p3rrfi05p20/file/900070662808", "", ""], ["Shellfish Strategic Initiative. (2023). Shellfish Beds Implementation Strategy: Protect and restore shellfish beds in Puget Sound as measured by the area of harvestable shellfish beds 2023 update. Washington State Department of Health, Puget Sound Partnership. https://pspwa.app.box.com/s/d3u2rf092imo9pt4foqgrw3m6p6rj9yv", "", ""], ["Shorelands and Environmental Assistance Program. (2021). Lessons learned from local governments incorporating sea level rise in Shoreline Master Programs (Publication 21-06-014). Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/summarypages/2106014.html", "", ""], ["Simonds, F. W., Swarzenski, P. W., Rosenberry, D. O., Reich, C. D., & Paulson, A. J. (2008). Estimates of nutrient loading by ground-water discharge into the Lynch Cove area of Hood Canal, Washington (Scientific Investigations Report 2008-5078). U.S. Geological Survey. https://doi.org/10.3133/sir20085078", "", ""], ["Skolrud, T.D., E. O'Donoghue, C.R. Shumway and A. Melhim. (2009). Identifying Growth and Diversification Relationships in Washington Agriculture. Choices Magazine (Agricultural & Applied Economics Association). 24(10): 45-18. https://www.jstor.org/stable/choices.24.1.0045", "", "Cited in Research Note for FPE 39"], ["Smith, J. E., Stocker, M. D., Hill, R. L., & Pachepsky, Y. A. (2019). The effect of temperature oscillations and sediment texture on fecal indicator bacteria survival in sediments. Water, Air, & Soil Pollution, 230, 270. https://doi.org/10.1007/s11270-019-4278-7", "", ""], ["Sobocinski K.L., M. LeMoine, J.W.Chamberlin, L. Conway-Cranos, A. Del Rio, H.L. Diefenderfer, C.M. Greene, J. Hall, G.E. Johnson, R.M. Thom, E. Trujillo, and T. Zackey. (2025). Assessing the cumulative effects of nearshore habitat restoration actions for multiple populations of juvenile salmon in Whidbey Basin, Washington: foundation and approach for synthesis and evaluation. Frontiers in Marine Science. 12:1514508. https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2025.1514508/full", "", "Cited in Research Note for FPE 14"], ["Social Science Advisory Committee. (2024). Social Science Research Agenda. https://pspwa.app.box.com/s/ymn7o5y7fip8r7qs62y0kvqzbvhn20oi", "", ""], ["State of Washington Department of Ecology. (n.d.). Upland Finfish Hatching & Rearing general permit. State of Washington Department of Ecology. Retrieved June 25, 2024 from https://ecology.wa.gov/regulations-permits/permits-certifications/upland-finfish-permit", "", ""], ["Stormwater Strategic Initiative. (2020, November). Freshwater Quality Implementation Strategy: Protect and restore Puget Sound stream health as measured by the Benthic Index of Biotic Integrity. Washington State Department of Ecology, Washington Stormwater Center, Washington State Department of Commerce, Puget Sound Partnership, & Puget Sound Institute. https://pspwa.app.box.com/v/PublicISBIBI/file/902443964294", "", ""], ["Stormwater Strategic Initiative. (2021a, February 5). Toxics in Puget Sound red flags workshop Q&A [Workshop sessions]. Toxics in Puget Sound Red Flags Workshop, Puyallup, WA, United States. https://pspwa.app.box.com/s/m4ww5rzli8fdl4u10dwb0p3rrfi05p20/file/900070648408", "", ""], ["Stormwater Strategic Initiative. (2021b, February 5). Toxics workshop 1 notes [Workshop]. Toxics in Puget Sound Red Flags Workshop, Puyallup, WA, United States. https://pspwa.app.box.com/s/m4ww5rzli8fdl4u10dwb0p3rrfi05p20/file/900070658008", "", ""], ["Stormwater Strategic Initiative. (2021c, February 26). Day 2 toxics workshop - February 26th, 2021 [Workshop]. Toxics in Puget Sound Workshop, Puyallup, WA, United States. https://pspwa.app.box.com/s/m4ww5rzli8fdl4u10dwb0p3rrfi05p20/file/900070790008", "", ""], ["Stormwater Strategic Initiative. (2026). Marine Water Quality Implementation Strategy Narrative: Improve and Protect Puget Sound Marine Water Quality and Dissolved Oxygen. Washington State Department of Ecology. https://app.box.com/file/2177619760524", "", ""], ["Stowe, C., S.J. Breslow, R. Warren, J. Hamill, L. Keesecker, R. Latchford, A. Petersen, and A. Rosen. (2024). Integrated Floodplain Governance: A Conceptual Approach and Assessment Protocol. Puget Sound Partnership, Bonneville Environmental Foundation, and University of Washington. https://drive.google.com/file/d/1P1D7jm8WgQahuyfu-IaGAnwGUv2ZRV3l/view", "", "Cited in Research Note for FPE 35"], ["Sugiarto, W., & Cook, J. (February 2022). Practices and challenges in stormwater behavior change programs: A survey of U.S. professionals. Washington State University Stormwater Center. https://www.ezview.wa.gov/Portals/_1962/Documents/SAM/D2.4%20FinalSurveyReportFeb272022.pdf", "", ""], ["Sugiarto, W., & Cook, J. (June 2022). A synthesis and annotated bibliography on stormwater behavior change campaigns. Washington State University Stormwater Center. https://www.ezview.wa.gov/Portals/_1962/Documents/SAM/D3.2%20EO%20Final%20Synthesis%20And%20Lit%20Review%20June%202022.pdf", "", ""], ["Takesue, R.K. (2016). Environmental and eelgrass response to dike removal: Nisqually River Delta (2010-14). U.S. Geological Survey Open-File Report 2016-1169. http://dx.doi.org/10.3133/ofr20161169", "", "Cited in Research Notes for FPE 17"], ["The Nature Conservancy. (2018). Floodplains by Design: Towards a New Paradigm. Integrated Floodplain Management Statud Report. https://www.floodplainsbydesign.org/wp-content/uploads/2018/08/Toward-a-New-Paradigm_IFM-Status-Report_Final_highlights_compiled.pdf", "", "Cited in Research Note for FPE 32"], ["Toft, J. D., Accola, K. L., Des Roches, S., Kobelt, J. N., Faulkner, H. S., Morgan, J. R., Perla, B. S., Metler, M., & Dethier, M. N. (2023). Coastal landforms and fetch influence shoreline restoration effectiveness. Frontiers in Marine Science, 10, 1199749. https://doi.org/10.3389/fmars.2023.1199749", "\"Coastal landforms and fetch influence shoreline restoration effectiveness\" is by Jason D. Toft, Kerry L. Accola, Simone Des Roches, Julia N. Kobelt, Hannah S. Faulkner, Jason R. Morgan, Bianca S. Perla, Maria Metler, and Megan N. Dethier and has a CC BY 4.0 ATTRIBUTION 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by/4.0/). The article can be accessed at the following link: https://doi.org/10.3389/fmars.2023.1199749. The publication is summarized.", "Cited in Research Notes for SA 8."], ["Toft, J. D., Dethier, M. N., Howe, E. R., Buckner, E. V., & Cordell, J. R. (2021). Effectiveness of living shorelines in the Salish Sea. Ecological Engineering, 167, 106255. https://doi.org/10.1016/j.ecoleng.2021.106255", "", ""], ["Toft, J., Kobelt, J., Accola, K., Dethier, M., Ogston, A., & Vollero, S. (2023). Functions of feeder bluffs in the Salish Sea: Implications for protection and restoration. Final Project Report for the Estuary and Salmon Restoration Program. PRISM Project Number 20-1932. https://salishsearestoration.org/wiki/File:Functions_of_Feeder_Bluffs_in_the_Salish_Sea.pdf", "\"File:Functions of Feeder Bluffs in the Salish Sea.pdf\" is by salishsearestoration.org and has a CC BY-SA 3.0 ATTRIBUTION-SHAREALIKE 3.0 UNPORTED Deed license (found at the following link: https://creativecommons.org/licenses/by-sa/3.0/deed.en). The webpage can be accessed at the following link: https://salishsearestoration.org/wiki/File:Functions_of_Feeder_Bluffs_in_the_Salish_Sea.pdf. The webpage is included in the reference citation for \"Functions of Feeder Bluffs in the Salish Sea: Implications for Protection and Restoration\" by Toft et al. (2023).", "Cited in Research Notes for SA 2."], ["Treaty Tribes in Western Washington. (2020). 2020 State of Our Watersheds. https://nwifc.org/publications/state-of-our-watersheds/", "", ""], ["Treaty Tribes in Western Washington. (2023). Tribal Natural Resources Management 2023 Annual Report from the Treaty Tribes in Western Washington. https://nwifc.org/publications/tribal-technical-reports/", "", ""], ["Tribal Management Conference. (2017). Recommended priorities for salmon recovery and the Chinook Implementation Strategy. https://pspwa.app.box.com/s/gabtcrbzo9i5yybkeyi6lx6cez0bh10o/file/237295001156?sb=/details", "", ""], ["United States Environmental Protection Agency. (2023). Stormwater best management practice: Pet waste management (EPA-832-F-21-032E). Office of Water, United States Environmental Protection Agency. https://www.epa.gov/system/files/documents/2023-01/bmp-pet-waste-management.pdf", "", ""], ["United States Environmental Protection Agency. (2024, January 25). NPDES General Permit for federal aquaculture facilities and aquaculture facilities located in Indian Country in Washington. United States Environmental Protection Agency. Retrieved June 25, 2024 from https://www.epa.gov/npdes-permits/npdes-general-permit-federal-aquaculture-facilities-and-aquaculture-facilities-located", "", ""], ["Upland finfish facilities, § WAC 173-221A-100 (2023). https://apps.leg.wa.gov/WAC/default.aspx?cite=173-221A-100&pdf=true", "", ""], ["USGS. (2014, March 4). Incorporating uncertainty into the ranking of SPARROW model nutrient yields from the Mississippi/Atchafalaya River Basin watersheds: Frequently asked questions. USGS. https://water.usgs.gov/nawqa/sparrow/nutrient_yields/faq.html#5", "", ""], ["Van Alstyne, K. L. (2016). Seasonal changes in nutrient limitation and nitrate sources in the green macroalga Ulva lactuca at sites with and without green tides in a northeastern Pacific embayment. Marine Pollution Bulletin, 103(1-2), 186-194. https://doi.org/10.1016/j.marpolbul.2015.12.020", "", ""], ["Van Wyngaarden, S., Anders, S., & Davidson, D. (2024). How farmer preferences and climate change beliefs shape BMP adoption. Agricultural Systems, 217, 103940. https://doi.org/10.1016/j.agsy.2024.103940", "\"How farmer preferences and climate change beliefs shape BMP adoption\" is by Sarah Van Wyngaarden, Sven Anders, and Debra Davidson and has a CC BY-NC-ND 4.0 Attribution-NonCommercial-NoDerivatives 4.0 International Deed license (found at the following link: https://creativecommons.org/licenses/by-nc-nd/4.0/). The article can be accessed at the following link: https://doi.org/10.1016/j.agsy.2024.103940. The publication is summarized.", ""], ["Walsh, C. J., Imberger, M., Burns, M. J., Bos, D. G., & Fletcher, T. D. (2022). Dispersed urban‐stormwater control improved stream water quality in a catchment‐scale experiment. Water Resources Research, 58, e2022WR032041. https://doi.org/10.1029/2022WR032041", "\"Dispersed Urban-Stormwater Control Improved Stream Water Quality in a Catchment-Scale Experiment\" is by Christopher J. Walsh, Moss Imberger, Matthew J. Burns, Darren G. Bos, and Tim D. Fletcher and has a CC BY 4.0 ATTRIBUTION 4.0 INTERNATIONAL Deed license (found at the following link: https://creativecommons.org/licenses/by/4.0/). The article can be accessed at the following link: https://doi.org/10.1029/2022WR032041. The publication is summarized.", ""], ["Washington Department of Ecology, Stormwater Strategic Initiative. (2020). Narrative. Toxics in Fish Implementation Strategy (Draft 6/2/2021). Washington Department of Ecology, Washington Department of Commerce, & Washington Stormwater Center. https://pspwa.app.box.com/s/q1rueyrajn7kgp7gfkal65k0h87cwcpx/file/817773067173?sb=/details", "", ""], ["Washington Department of Ecology, Washington Department of Fish and Wildlife, & Environmental Protection Agency. (2022). Evaluating a Multi-Agency Review Team (MART) approach to streamline permitting of beneficial marine shoreline projects. Puget Sound National Estuary Program Grant No. PC-01J22301. Washington Department of Ecology, Washington Department of Fish and Wildlife, Environmental Protection Agency. https://pspwa.box.com/s/2s022uc5w0vjwa4k1o1ajl8sugvjs8zf", "", ""], ["Washington Department of Fish and Wildlife. (n.d.). Utilizing high resolution aerial imagery to identify land cover and changes throughout Washington. Washington Department of Fish and Wildlife. https://hrcd-wdfw.hub.arcgis.com/", "", ""], ["Washington Sea Grant. (n.d.). A blue carbon assessment for the Stillaguamish River Estuary: Quantifying the benefits of tidal marsh restoration. Washington Sea Grant. https://wsg.washington.edu/research/a-blue-carbon-assessment-for-the-stillaguamish-river-estuary-quantifying-the-benefits-of-tidal-marsh-restoration/", "", ""], ["Washington State Department of Ecology, Water Quality Program. (2023). Puget Sound nutrient credit trading recommendations for program implementation (Publication 23-10-007). Washington State Department of Ecology, Water Quality Program. https://apps.ecology.wa.gov/publications/summarypages/2310007.html", "", ""], ["Washington State Department of Ecology. (2024). How to find and address PCBs in building materials (Publication 22-04-024). Hazardous Waste and Toxics Reduction Program, Washington State Department of Ecology. https://apps.ecology.wa.gov/publications/SummaryPages/2204024.html", "", ""], ["Washington State Department of Ecology. (2025). Redmond Paired Watershed Study, Interim Findings: 2016-2023. Publication 25-10-078. https://apps.ecology.wa.gov/publications/documents/2510078.pdf", "", "Cited in Research Notes for B-IBI 4, B-IBI 12, B-IBI 15, and B-IBI 16."], ["Washington State Department of Ecology. (n.d.). Paired watershed retrofit & restoration study. Washington State Department of Ecology. Retrieved August 6, 2024, from https://ecology.wa.gov/regulations-permits/reporting-requirements/stormwater-monitoring/stormwater-action-monitoring/sam-effectiveness-studies/paired-watershed-retrofit-and-restoration-study", "", "Cited in Research Notes for B-IBI 4, B-IBI 12, B-IBI 15, and B-IBI 16."], ["Washington State Department of Ecology. (n.d.). Water quality atlas start page. Washington State Department of Ecology. https://fortress.wa.gov/ecy/waterqualityatlas/StartPage.aspx", "", ""], ["Washington State Department of Health. (2016). Puget Sound septic system management programs: Best management practices reference manual (DOH 332-166). https://doh.wa.gov/sites/default/files/legacy/Documents/Pubs//332-166.pdf", "", ""], ["Wastewater discharge standards and effluent limitations, Wash. Admin. Code § 173-221A. (1990). https://apps.leg.wa.gov/wac/default.aspx?cite=173-221a&full=true", "", ""], ["Watershed Management Section, Water Quality Program, Washington State Department of Ecology. (2018). Washington State's marine dissolved oxygen criteria: Application to nutrients. Understanding the purpose and application of the criteria in the Surface Water Quality Standards. https://www.ezview.wa.gov/Portals/_1962/Documents/PSNSRP/Marine%20DO%20Paper%20Guidance%20Updated%20July%202018.pdf", "", ""], ["Weiner, H. M., Kaminsky, G. M., Hacking, A., McCandless, D., Bolles, K., Gostic, M., Liljegren, J., & Drummond, H. (2018). Mapping bluffs and beaches of Puget Sound to quantify sediment supply, Estuary and Salmon Restoration Program Learning Project final report (Publication #18-06-008). Shorelands and Environmental Assistance Program, Washington State Department of Ecology, Olympia, WA. https://fortress.wa.gov/ecy/publications/summarypages/1806008.html", "", ""], ["West, J. E. (2021, February 5). Toxics in Puget Sound aquatic life [Workshop presentation]. Toxics in Puget Sound Red Flags Workshop, Puyallup, WA, United States. https://pspwa.app.box.com/s/m4ww5rzli8fdl4u10dwb0p3rrfi05p20/file/900070757608", "", ""], ["West, J. E., O’Neill, S. M., & Ylitalo, G. M. (2017). Time trends of Persistent Organic Pollutants in benthic and pelagic indicator fishes from Puget Sound, Washington, USA. Archives of Environmental Contamination and Toxicology, 73, 207–229. https://doi.org/10.1007/s00244-017-0383-z", "", ""], ["Whittemore, A. C. Kruger, K. Rajagopalan, K. Doonan, M. Phelps, S. Hall, G. LaHue, D. Gelardi, and Yorgey. (2025). Anticipated climate change impacts on agriculture in Washington State. https://pubs.extension.wsu.edu/product/anticipated-climate-change-impacts-on-agriculture-in-washington-state/", "", "Cited in Research Note for FPE 38"], ["Wong, S. (2022). Chemicals of emerging concern in pretreated industrial wastewater in Northwestern Washington State: Screening study results, 2021 (Publication 22-03-013). Washington State Department of Ecology, Olympia. https://apps.ecology.wa.gov/publications/SummaryPages/2203013.html", "", ""], ["Wright, C. W. (2021). Synthesis of integrated floodplain management in selected Puget Sound river deltas. University of Washington Tacoma, Puget Sound Institute. https://www.eopugetsound.org/articles/2021-puget-sound-synthesis-integrated-floodplain-management", "", ""], ["Wright, C.W. (2021). Synthesis of Integrated Floodplain Management in Selected Puget Sound River Deltas. Puget Sound Institute, UW Tacoma. https://www.eopugetsound.org/sites/default/files/features/resources/IFMSynthesisFinal_Revised3.3.22.pdf", "", "Cited in justification for resolution of FPE no ID"], ["Zerbe, K. (2025). Mapping 45 Years of Flood Risk: Insights from Repetitive Loss Patterns across Washington State. December 2, 2025 webinar hosted by Forerunner. https://www.withforerunner.com/post/recap-mapping-45-years-of-flood-risk---insights-from-repetitive-loss-patterns-across-washington-state", "", "Cited in Research Note for FPE 26"]]</script>
+
+<script>
+(function(){
+
+  var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBROzNNap9eplN9rxaq4oWz74yH9naRFV2LhSS20dI3cb8Wj9LWP2M68dpuCa5TQ/pub?gid=425196818&single=true&output=csv";
+
+  var LAST_UPDATED_DISPLAY = "Last updated August 20, 2026";
+  document.getElementById('updated-text').textContent = LAST_UPDATED_DISPLAY;
+
+  function parseCSV(text){
+    var rows = [], row = [], field = '', inQuotes = false, i = 0, len = text.length;
+    while(i < len){
+      var c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+          else { inQuotes = false; i++; continue; }
+        } else { field += c; i++; continue; }
+      } else {
+        if(c === '"'){ inQuotes = true; i++; continue; }
+        else if(c === ','){ row.push(field); field=''; i++; continue; }
+        else if(c === '\r'){ i++; continue; }
+        else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+        else { field += c; i++; continue; }
+      }
+    }
+    if(field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function csvToObjects(text){
+    var rows = parseCSV(text);
+    if(rows.length === 0) return [];
+    var headers = rows[0];
+    var out = [];
+    for(var r=1; r<rows.length; r++){
+      var rowArr = rows[r];
+      if(rowArr.length === 1 && rowArr[0].trim() === '') continue;
+      var obj = {};
+      for(var c=0; c<headers.length; c++){ obj[headers[c]] = rowArr[c] !== undefined ? rowArr[c] : ''; }
+      out.push(obj);
+    }
+    return out;
+  }
+
+  var CANONICAL_TOPICS = [
+    'Administration','Climate Change','Communication','Cost-Benefit Analysis','Decision Support',
+    'Economics','Ecosystem function/processes','Effectiveness','Governance','Habitat','Human Behavior','Human Health',
+    'Hydrology','Incentives','Land Use Planning','Mapping/Spatial','Modeling','Monitoring','Ocean Acidification',
+    'Prioritization','Regulation','Riparian','Shellfish','Stormwater','Other',
+    'PCBs','PBDEs','PAHs','CECs','6PPD-Q','Microplastics','Wastewater','Groundwater','Status and Trends',
+    'Exposure/Uptake','Fate and Transport','Chemical Identification','Chemical Prioritization','Sources',
+    'Loading and Pathways','Biological Impacts','Human Behavior (including how chemicals are utilized)',
+    'Environmental Justice','Spatial','Methodologies','Pollution Prevention'
+  ];
+  var CANONICAL_MAP = {};
+  CANONICAL_TOPICS.forEach(function(c){
+    var base = c.split(' (')[0].trim();
+    CANONICAL_MAP[base.toLowerCase()] = base;
+  });
+
+  function splitTopics(raw){
+    if(!raw) return [];
+    var tmp = raw.replace(/(?<=\s)\/(?=\s)/g, ',');
+    return tmp.split(',').map(function(p){ return p.trim(); }).filter(Boolean);
+  }
+
+  function buildTopicCasingMap(records){
+    var counts = {};
+    records.forEach(function(r){
+      splitTopics(r['Topic(s)']).forEach(function(p){
+        var key = p.toLowerCase();
+        if(!counts[key]) counts[key] = {};
+        counts[key][p] = (counts[key][p]||0) + 1;
+      });
+    });
+    var display = {};
+    Object.keys(counts).forEach(function(key){
+      if(CANONICAL_MAP[key]){ display[key] = CANONICAL_MAP[key]; return; }
+      var best=null, bestCount=-1;
+      Object.keys(counts[key]).forEach(function(casing){
+        if(counts[key][casing] > bestCount){ best = casing; bestCount = counts[key][casing]; }
+      });
+      display[key] = best;
+    });
+    return display;
+  }
+
+  function clean(v){
+    if(v === undefined || v === null) return null;
+    var s = String(v).trim();
+    return s.length ? s : null;
+  }
+
+  function transformRecords(csvObjects){
+    var withQuestion = csvObjects.filter(function(r){ return clean(r['Question']); });
+    var casingMap = buildTopicCasingMap(withQuestion);
+
+    var records = withQuestion.map(function(r){
+      var priority = clean(r['Priority Level (within IS)']);
+      if(priority && priority.toLowerCase() === 'low') priority = 'Low';
+
+      var pieces = splitTopics(r['Topic(s)']);
+      var seen = [];
+      pieces.forEach(function(p){
+        var name = casingMap[p.toLowerCase()] || p;
+        if(seen.indexOf(name) === -1) seen.push(name);
+      });
+
+      return {
+        question: clean(r['Question']),
+        id: clean(r['ID']),
+        strategy_code: clean(r['Implementation Strategy']),
+        strategy_name: clean(r['Strategy Name']),
+        category: clean(r['Category']),
+        timeframe: clean(r['Timeframe to Resolve']),
+        source: clean(r['Source of Question/Uncertainty']),
+        status: clean(r['Uncertainty Status']),
+        priority: priority,
+        date_added: clean(r['Date Added']),
+        prioritization_source: clean(r['Prioritization Source']),
+        latest_prioritization_date: clean(r['Latest Prioritization Date']),
+        status_notes: clean(r['Status and Prioritization Notes']),
+        research_notes: clean(r['Research Notes']),
+        research_review_date: clean(r['Research Review Date']),
+        general_notes: clean(r['General Notes']),
+        topics: seen
+      };
+    });
+
+    // Skip placeholder rows (Chinook) and any totals/stray rows where the "question" or strategy is just a number.
+    return records.filter(function(r){
+      return r.strategy_code && !/^chinook/i.test(r.strategy_code) &&
+             !/^\d+(\.\d+)?$/.test(r.question) && !/^\d+(\.\d+)?$/.test(r.strategy_code);
+    });
+  }
+
+  // ============================================================
+  // References: parsing the References sheet, and turning citations
+  // in the notes into links
+  // ============================================================
+
+  // Optional: paste the published-CSV link of the "References" tab here
+  // (File > Share > Publish to web > choose the References tab > CSV).
+  // While this is blank, the page uses the built-in copy of the References sheet.
+  var REFERENCES_CSV_URL = "";
+
+  // Short names that notes use for organizations, mapped to how the References
+  // sheet spells them (lower-case, no punctuation). Add more here as needed.
+  var CITATION_ALIASES = {
+    'ecology': 'washington department of ecology',
+    'itrc': 'interstate technology and regulatory council',
+    'wdfw': 'washington department of fish and wildlife',
+    'epa': 'united states environmental protection agency'
+  };
+
+  function escHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function normName(s){
+    var t = String(s || '').toLowerCase();
+    if(t.normalize) t = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    t = t.replace(/&/g, ' and ').replace(/['\u2019]s\b/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return t.replace(/\bwashington state department of\b/g, 'washington department of');
+  }
+
+  function refHash(s){
+    var h = 5381;
+    for(var i = 0; i < s.length; i++){ h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+    return (h >>> 0).toString(36);
+  }
+
+  function buildReference(text, license, note){
+    text = String(text || '').trim();
+    var year = null, suffix = '', idx = text.length;
+    var m = /\(((?:[A-Z][a-z]+\.?\s+)?)(\d{4})([a-z]?)(?=[,)\s])/.exec(text);
+    var nd = /\(n\.d\.\)/.exec(text);
+    if(m && (!nd || m.index < nd.index)){ year = m[2]; suffix = m[3]; idx = m.index; }
+    else if(nd){ year = 'nd'; idx = nd.index; }
+    var authors = text.slice(0, idx).replace(/[\s.,]+$/, '').trim();
+    var personal = /^[^,]+,\s*[A-Z]\.?(?:\s?[A-Z]\.?)*\s*(?:[,&.]|$)/.test(authors);
+    var first = authors.split(',')[0].replace(/\s+[A-Z]\.(?:\s?[A-Z]\.)*$/, '');   // "Sobocinski K.L." -> "Sobocinski"
+    if(!personal){
+      // "Sobocinski K.L., M. LeMoine, ..." (no comma after the surname)
+      var sm = /^([A-Z][\w'\u2019\-]+(?:\s[A-Z][\w'\u2019\-]+)?)\s+[A-Z]\.(?:\s?[A-Z]\.)*\s*[,&]/.exec(authors + ',');
+      if(sm){ personal = true; first = sm[1]; }
+    }
+    var url = null;
+    var um = /https?:\/\/[^\s<>"]+/.exec(text);
+    if(um){ url = um[0].replace(/[.,;:)\]]+$/, ''); }
+    else if(license){
+      var lm = /accessed at the following link:\s*(https?:\/\/[^\s<>"]+)/i.exec(license);
+      if(lm) url = lm[1].replace(/[.,;:)\]]+$/, '');
+    }
+    var noteIds = {}, nm, idRe = /\b([A-Z][A-Za-z\-]*\s\d+)\b/g;
+    while((nm = idRe.exec(note || ''))){ noteIds[nm[1].toLowerCase()] = true; }
+    return {
+      id: 'r' + refHash(text),
+      text: text,
+      license: license ? String(license).trim() : '',
+      note: note ? String(note).trim() : '',
+      url: url,
+      year: year,
+      suffix: suffix,
+      authorsNorm: normName(authors).replace(/^the /, ''),
+      firstToken: normName(first).replace(/^the /, ''),
+      personal: personal,
+      noteIds: noteIds,
+      search: (text + ' ' + (note || '')).toLowerCase()
+    };
+  }
+
+  function buildReferenceSet(rows, intro){
+    var refs = [], byYear = {}, used = {};
+    (rows || []).forEach(function(r){
+      var text = r && r[0] ? String(r[0]).trim() : '';
+      if(!text) return;
+      var ref = buildReference(text, r[1], r[2]);
+      var base = ref.id, n = 1;
+      while(used[ref.id]){ n++; ref.id = base + '-' + n; }
+      used[ref.id] = true;
+      refs.push(ref);
+      if(ref.year){ (byYear[ref.year] = byYear[ref.year] || []).push(ref); }
+    });
+    return { refs: refs, byYear: byYear, intro: intro || '' };
+  }
+
+  // Reads the published CSV of the References tab (a few title rows, then a
+  // header row "References | License Information | Notes", then one row per source).
+  function parseReferencesCsv(text){
+    var rows = parseCSV(text), hi = -1, i;
+    for(i = 0; i < rows.length; i++){
+      if(rows[i][0] && rows[i][0].trim() === 'References' && /licen[cs]e/i.test(rows[i][1] || '')){ hi = i; break; }
+    }
+    var data;
+    if(hi >= 0){ data = rows.slice(hi + 1); }
+    else {
+      data = rows.filter(function(r){
+        return r[0] && r[0].length > 40 && /\((?:[A-Za-z]+\.?\s+)?(?:\d{4}[a-z]?|n\.d\.)/.test(r[0]);
+      });
+    }
+    return data.filter(function(r){ return r[0] && r[0].trim(); })
+               .map(function(r){ return [r[0], r[1] || '', r[2] || '']; });
+  }
+
+  // Makes plain-text URLs clickable (everything else is escaped).
+  function linkifyUrls(text){
+    var out = '', pos = 0, re = /https?:\/\/[^\s<>"]+/g, m;
+    text = String(text || '');
+    while((m = re.exec(text))){
+      var url = m[0].replace(/[.,;:)\]]+$/, '');
+      out += escHtml(text.slice(pos, m.index)) +
+             '<a href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(url) + '</a>';
+      pos = m.index + url.length;
+      re.lastIndex = pos;
+    }
+    return out + escHtml(text.slice(pos));
+  }
+
+  // ---- matching a citation in a note to an entry in the reference list ----
+  var LEAD_STOP = /^(see|also|adapted|from|the|and|in|by|per|of|as|cf|compare)$/i;
+
+  function parseYearToken(y){
+    var m = /^((?:19|20)\d{2})([a-z]?)$/.exec(y);
+    if(m) return { year: m[1], suffix: m[2] };
+    if(/^n\.?d\.?$/i.test(y)) return { year: 'nd', suffix: '' };
+    return null;
+  }
+
+  // "Kinney", "Kinney and Francis", "Van Alstyne"
+  function personalMatch(words, c){
+    var names = words.join(' ').split(/\s+and\s+|\s*&\s*|\s*,\s*/).map(normName).filter(Boolean);
+    if(!names.length || names[0] !== c.firstToken) return false;
+    for(var i = 1; i < names.length; i++){
+      if((' ' + c.authorsNorm + ' ').indexOf(' ' + names[i] + ' ') === -1) return false;
+    }
+    return true;
+  }
+
+  function matchWords(words, yr, refSet, trimmed){
+    var p = normName(words.join(' '));
+    if(!p) return [];
+    var cands = refSet.byYear[yr.year] || [];
+    if(yr.suffix) cands = cands.filter(function(c){ return c.suffix === yr.suffix; });
+    var alias = CITATION_ALIASES[p] || null;
+    var out = [];
+    cands.forEach(function(c){
+      var org = c.authorsNorm === p || c.authorsNorm.indexOf(p + ' ') === 0 ||
+                (alias && (c.authorsNorm === alias || c.authorsNorm.indexOf(alias + ' ') === 0));
+      var per = c.personal && personalMatch(words, c);
+      if(!trimmed ? (org || per) : (per || (org && words.length >= 2))) out.push(c);
+    });
+    return out;
+  }
+
+  function matchAuthorPhrase(phrase, yr, refSet){
+    var re = /\S+/g, m, words = [], offs = [];
+    while((m = re.exec(phrase))){ words.push(m[0]); offs.push(m.index); }
+    var n = words.length, etAl = false;
+    if(n >= 2 && /^al\.?$/i.test(words[n - 1]) && /^et$/i.test(words[n - 2])){ etAl = true; words = words.slice(0, n - 2); offs = offs.slice(0, n - 2); }
+    if(words.length){ words[words.length - 1] = words[words.length - 1].replace(/['\u2019]s$/, ''); }
+    while(words.length && LEAD_STOP.test(words[0].replace(/[^A-Za-z]/g, ''))){ words.shift(); offs.shift(); }
+    for(var start = 0; start < words.length; start++){
+      var sub = words.slice(start);
+      var res = matchWords(sub, yr, refSet, start > 0);
+      if(res.length){ return { refs: res, startOffset: offs[start], used: sub, etAl: etAl }; }
+    }
+    return null;
+  }
+
+  function resolveCitation(phrase, yearTok, recordId, refSet){
+    var yr = parseYearToken(yearTok);
+    if(!yr) return null;
+    var mm = matchAuthorPhrase(phrase, yr, refSet);
+    if(!mm) return null;
+    var refs = mm.refs;
+    if(refs.length > 1 && refs.every(function(c){ return !c.personal; })){
+      // organization authors: "King County (2022)" = sole author; "King County et al." = with co-authors
+      var pUsed = normName(mm.used.join(' '));
+      var pick = refs.filter(function(c){ return mm.etAl ? c.authorsNorm !== pUsed : c.authorsNorm === pUsed; });
+      if(pick.length) refs = pick;
+    }
+    if(refs.length > 1 && recordId){
+      var key = String(recordId).toLowerCase();
+      var narrowed = refs.filter(function(r){ return r.noteIds[key]; });
+      if(narrowed.length === 1) refs = narrowed;
+    }
+    var q = mm.used.join(' ').replace(/[,;()]/g, '').trim() + ' ' + (yr.year === 'nd' ? '' : yr.year);
+    return { refs: refs, startOffset: mm.startOffset, query: q.trim() };
+  }
+
+  // Finds things that look like citations: "Breslow et al. (2021)" and
+  // "(Francis and James, 2023)" / "(Stormwater Strategic Initiative, 2021a; 2021b)".
+  function findCitations(text){
+    var spans = [], m;
+    var pg = /\(([^()]*)\)/g;
+    var yrRe = /(?<![\d.\/\-])\b((?:19|20)\d{2}[a-z]?|n\.d\.)(?![\d\/]|\.\d)/g;
+    while((m = pg.exec(text))){
+      var inner = m[1], base = m.index + 1;
+      if(/personal communication/i.test(inner)) continue;
+      yrRe.lastIndex = 0;
+      var ym, lastEnd = 0, lastPhrase = '';
+      while((ym = yrRe.exec(inner))){
+        var seg = inner.slice(lastEnd, ym.index), segOff = lastEnd;
+        var semi = seg.lastIndexOf(';');
+        if(semi !== -1){ seg = seg.slice(semi + 1); segOff = lastEnd + semi + 1; }
+        var lead = /^[\s,]*(?:and\s+)?/i.exec(seg)[0].length;
+        var phrase = seg.slice(lead).replace(/[\s,]+$/, '');
+        var span = { yearTok: ym[1], end: base + ym.index + ym[1].length };
+        if(phrase){
+          span.phrase = phrase; span.phraseStart = base + segOff + lead; span.reused = false; lastPhrase = phrase;
+        } else if(lastPhrase){
+          span.phrase = lastPhrase; span.reused = true; span.yearStart = base + ym.index;
+        } else {
+          lastEnd = ym.index + ym[1].length;
+          continue;
+        }
+        spans.push(span);
+        lastEnd = ym.index + ym[1].length;
+      }
+    }
+    var nr = /((?:[A-Z][\w'\u2019\-]*(?:\s+(?:and|&|of|for|the|in|on)\s+|\s+)){0,8}[A-Z][\w'\u2019\-]*(?:\s+et\s+al\.?)?)\s*\(((?:19|20)\d{2}[a-z]?)\)/g;
+    while((m = nr.exec(text))){
+      spans.push({ phrase: m[1], phraseStart: m.index, end: m.index + m[0].length, yearTok: m[2], reused: false });
+    }
+    return spans;
+  }
+
+  // Returns [{start, end, res}] for every citation that matches a reference.
+  function resolveAll(text, recordId, refSet){
+    var items = [];
+    if(!text || !refSet || !refSet.refs || !refSet.refs.length) return items;
+    findCitations(text).forEach(function(sp){
+      var res = resolveCitation(sp.phrase, sp.yearTok, recordId, refSet);
+      if(!res) return;
+      items.push({ start: sp.reused ? sp.yearStart : sp.phraseStart + res.startOffset, end: sp.end, res: res });
+    });
+    items.sort(function(a, b){ return a.start - b.start || b.end - a.end; });
+    var kept = [], lastEnd = -1;
+    items.forEach(function(it){ if(it.start >= lastEnd){ kept.push(it); lastEnd = it.end; } });
+    return kept;
+  }
+
+  function citationAnchor(label, res){
+    var refs = res.refs, r0 = refs[0];
+    if(refs.length === 1){
+      var tip = r0.text.length > 280 ? r0.text.slice(0, 277) + '\u2026' : r0.text;
+      if(r0.url){
+        return '<a class="cite-link cite-ext" href="' + escHtml(r0.url) + '" target="_blank" rel="noopener noreferrer" title="' + escHtml(tip) + '">' + escHtml(label) + '</a>';
+      }
+      return '<a class="cite-link cite-internal" href="#/reference/' + encodeURIComponent(r0.id) + '" data-ref-id="' + escHtml(r0.id) + '" title="' + escHtml(tip) + '">' + escHtml(label) + '</a>';
+    }
+    return '<a class="cite-link cite-internal" href="#/references/' + encodeURIComponent(res.query) + '" data-ref-q="' + escHtml(res.query) + '" title="' + refs.length + ' possible matches \u2014 click to compare">' + escHtml(label) + '</a>';
+  }
+
+  // Escapes the text and wraps matched citations in links. Safe to put in innerHTML.
+  function linkifyCitations(text, recordId, refSet){
+    text = (text === undefined || text === null) ? '' : String(text);
+    if(!text) return '';
+    var items = resolveAll(text, recordId, refSet);
+    if(!items.length) return escHtml(text);
+    var out = '', pos = 0;
+    items.forEach(function(it){
+      out += escHtml(text.slice(pos, it.start)) + citationAnchor(text.slice(it.start, it.end), it.res);
+      pos = it.end;
+    });
+    return out + escHtml(text.slice(pos));
+  }
+
+  var viewLoading = document.getElementById('view-loading');
+  var viewError = document.getElementById('view-error');
+  var viewStrategies = document.getElementById('view-strategies');
+  var viewTopicList = document.getElementById('view-topic-list');
+  var viewDetail = document.getElementById('view-detail');
+  var viewReferences = document.getElementById('view-references');
+  var ALL_VIEWS = [viewLoading, viewError, viewStrategies, viewTopicList, viewDetail, viewReferences];
+
+  function closeModalIfOpen(){
+    var m = document.getElementById('detail-modal');
+    if(m && !m.classList.contains('hidden')){
+      m.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  }
+
+  function showOnly(view){
+    closeModalIfOpen();
+    ALL_VIEWS.forEach(function(v){ v.classList.toggle('hidden', v !== view); });
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  // ---- URL <-> route helpers, so browser Back/Forward work like real navigation ----
+  function hashForRoute(appView, mode, key){
+    if(appView === 'topics') return '#/topics';
+    if(appView === 'references'){
+      if(mode === 'entry' && key) return '#/reference/' + encodeURIComponent(key);
+      if(mode === 'query' && key) return '#/references/' + encodeURIComponent(key);
+      return '#/references';
+    }
+    if(appView === 'detail'){
+      if(mode === 'strategy') return '#/strategy/' + encodeURIComponent(key);
+      if(mode === 'topic') return '#/topic/' + encodeURIComponent(key);
+      if(mode === 'search') return '#/search/' + encodeURIComponent(key);
+    }
+    return '#/';
+  }
+  function parseHashRoute(){
+    try {
+      var h = (location.hash || '').replace(/^#\/?/, '');
+      if(!h) return { appView:'strategies' };
+      var parts = h.split('/');
+      if(parts[0] === 'topics') return { appView:'topics' };
+      if(parts[0] === 'references') return parts[1] ? { appView:'references', mode:'query', key: decodeURIComponent(parts[1]) } : { appView:'references' };
+      if(parts[0] === 'reference' && parts[1]) return { appView:'references', mode:'entry', key: decodeURIComponent(parts[1]) };
+      if(parts[0] === 'strategy' && parts[1]) return { appView:'detail', mode:'strategy', key: decodeURIComponent(parts[1]) };
+      if(parts[0] === 'topic' && parts[1]) return { appView:'detail', mode:'topic', key: decodeURIComponent(parts[1]) };
+      if(parts[0] === 'search' && parts[1]) return { appView:'detail', mode:'search', key: decodeURIComponent(parts[1]) };
+    } catch(e) { /* malformed link: fall through to landing */ }
+    return { appView:'strategies' };
+  }
+
+  document.getElementById('retry-btn').addEventListener('click', boot);
+
+  function readReferencesSnapshot(){
+    try {
+      var el = document.getElementById('references-snapshot');
+      return buildReferenceSet(el ? JSON.parse(el.textContent) : []);
+    } catch(e){ return buildReferenceSet([]); }
+  }
+
+  // Uses the live References tab when REFERENCES_CSV_URL is set; otherwise (or if it
+  // can't be reached) falls back to the copy built into this page. Never blocks the page.
+  function loadReferences(){
+    if(!REFERENCES_CSV_URL) return Promise.resolve(readReferencesSnapshot());
+    return fetch(REFERENCES_CSV_URL, {cache:'no-store'})
+      .then(function(res){ if(!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
+      .then(function(text){
+        var set = buildReferenceSet(parseReferencesCsv(text));
+        if(!set.refs.length) throw new Error('empty references feed');
+        return set;
+      })
+      .catch(function(){ return readReferencesSnapshot(); });
+  }
+
+  function boot(){
+    showOnly(viewLoading);
+    fetch(CSV_URL, {cache:'no-store'})
+      .then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function(text){
+        var objs = csvToObjects(text);
+        var records = transformRecords(objs);
+        if(records.length === 0) throw new Error('No usable rows in feed');
+        return loadReferences().then(function(refSet){ initApp(records, refSet); });
+      })
+      .catch(function(err){
+        document.getElementById('error-detail').textContent =
+          "The live spreadsheet feed didn't respond (" + err.message + "). Check your connection, or confirm the sheet is still published at File → Share → Publish to web.";
+        showOnly(viewError);
+      });
+  }
+
+  function initApp(records, refSet){
+    refSet = refSet || buildReferenceSet([]);
+    var strategyNames = {
+      'BIBI': 'Benthic Index of Biotic Integrity (B-IBI)',
+      'Chinook': 'Chinook Salmon',
+      'Estuaries': 'Estuaries',
+      'Floodplains': 'Floodplains',
+      'LDC': 'Land Development and Cover',
+      'Marine Veg': 'Marine Vegetation',
+      'MWQ': 'Marine Water Quality',
+      'Shellfish': 'Shellfish Beds',
+      'Shoreline Armoring': 'Shoreline Armoring',
+      'Toxics in Fish': 'Toxics in Fish'
+    };
+    var strategyCounts = {};
+    records.forEach(function(r){ strategyCounts[r.strategy_code] = (strategyCounts[r.strategy_code]||0) + 1; });
+
+    // Whatever strategies are in the sheet, alphabetical by title (so renamed or new ones just appear).
+    var strategyOrder = Object.keys(strategyCounts).sort(function(a, b){
+      return (strategyNames[a] || a).localeCompare(strategyNames[b] || b);
+    });
+
+    document.getElementById('strategy-total-count').textContent =
+      records.length + ' questions across ' + strategyOrder.filter(function(c){return strategyCounts[c];}).length + ' strategies';
+
+    var strategyGrid = document.getElementById('strategy-grid');
+    strategyGrid.innerHTML = '';
+    strategyOrder.forEach(function(code){
+      if(!strategyCounts[code]) return;
+      var card = document.createElement('button');
+      card.className = 'item-card';
+      card.innerHTML =
+        '<span class="item-name">' + escapeHtml(strategyNames[code] || code) + '</span>' +
+        '<span class="item-count"><b>' + strategyCounts[code] + '</b> question' + (strategyCounts[code]===1?'':'s') + '</span>';
+      card.addEventListener('click', function(){ openStrategy(code); });
+      strategyGrid.appendChild(card);
+    });
+
+    var topicMap = {};
+    records.forEach(function(r){
+      (r.topics||[]).forEach(function(t){
+        if(!topicMap[t]) topicMap[t] = [];
+        topicMap[t].push(r);
+      });
+    });
+    var topicNames = Object.keys(topicMap).sort(function(a,b){
+      return topicMap[b].length - topicMap[a].length || a.localeCompare(b);
+    });
+
+    document.getElementById('topic-total-count').textContent = topicNames.length + ' topics';
+
+    var topicGrid = document.getElementById('topic-grid');
+    topicGrid.innerHTML = '';
+    topicNames.forEach(function(name){
+      var count = topicMap[name].length;
+      var card = document.createElement('button');
+      card.className = 'item-card';
+      card.innerHTML =
+        '<span class="item-name">' + escapeHtml(name) + '</span>' +
+        '<span class="item-count"><b>' + count + '</b> question' + (count===1?'':'s') + '</span>';
+      card.addEventListener('click', function(){ openTopic(name); });
+      topicGrid.appendChild(card);
+    });
+
+    function goToStrategies(push){
+      showOnly(viewStrategies);
+      if(push !== false) history.pushState({ appView:'strategies' }, '', hashForRoute('strategies'));
+    }
+    function goToTopics(push){
+      showOnly(viewTopicList);
+      if(push !== false) history.pushState({ appView:'topics' }, '', hashForRoute('topics'));
+    }
+
+    document.getElementById('to-topics-btn').onclick = function(){ goToTopics(true); };
+    document.getElementById('to-strategies-btn').onclick = function(){ goToStrategies(true); };
+
+    var globalSearchForm = document.getElementById('global-search-form');
+    var globalSearchInput = document.getElementById('global-search-input');
+    globalSearchForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      openSearch(globalSearchInput.value);
+    });
+
+    var state = { mode:null, key:null, sortKey:'priority', sortDir:'asc', search:'', priority:'' };
+    var activeBaseRecords = [];
+    var lastRenderedSorted = [];
+
+    document.getElementById('back-btn').onclick = function(){
+      history.back();
+    };
+
+    function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
+
+    function populateSelect(el, values, label){
+      el.innerHTML = '<option value="">' + label + ': all</option>' +
+        values.map(function(v){ return '<option value="'+escapeAttr(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function escapeAttr(s){ return escapeHtml(s); }
+
+    var priorityRank = {'Top':0,'High':1,'Medium':2,'Low':3,'No priority':4};
+
+    function openStrategy(code, push){
+      openDetail({ mode:'strategy', key:code, records: records.filter(function(r){ return r.strategy_code === code; }),
+        codeLabel: code, nameLabel: strategyNames[code] || code }, undefined, push);
+    }
+    function openTopic(name, push){
+      openDetail({ mode:'topic', key:name, records: topicMap[name] || [], codeLabel:'Topic', nameLabel:name }, undefined, push);
+    }
+    function openSearch(query, push){
+      query = (query || '').trim();
+      if(!query) return;
+      openDetail({ mode:'search', key:query, records: records, codeLabel:'Search', nameLabel:'“' + query + '”' }, query, push);
+    }
+
+    function openDetail(cfg, initialSearch, push){
+      state.mode = cfg.mode; state.key = cfg.key;
+      state.search = initialSearch || ''; state.priority='';
+      state.sortKey='priority'; state.sortDir='asc';
+      document.getElementById('search-input').value = state.search;
+      activeBaseRecords = cfg.records;
+
+      document.getElementById('detail-code').textContent = (cfg.codeLabel === cfg.nameLabel) ? '' : cfg.codeLabel;
+      document.getElementById('detail-name').textContent = cfg.nameLabel;
+      document.getElementById('back-btn').textContent = '← ' +
+        (cfg.mode === 'topic' ? 'All topics' : cfg.mode === 'search' ? 'Home' : 'All strategies');
+
+      populateSelect(document.getElementById('filter-priority'), uniqueSorted(activeBaseRecords.map(function(r){return r.priority;})), 'Priority');
+
+      showOnly(viewDetail);
+      render();
+
+      if(push !== false){
+        history.pushState({ appView:'detail', mode:cfg.mode, key:cfg.key }, '', hashForRoute('detail', cfg.mode, cfg.key));
+      }
+    }
+
+    function applyFilters(list){
+      var s = state.search.trim().toLowerCase();
+      return list.filter(function(r){
+        if(s && !(r.question||'').toLowerCase().includes(s)) return false;
+        if(state.priority && r.priority !== state.priority) return false;
+        return true;
+      });
+    }
+
+    function applySort(list){
+      var key = state.sortKey, dir = state.sortDir === 'asc' ? 1 : -1;
+      var copy = list.slice();
+      copy.sort(function(a,b){
+        var av, bv;
+        if(key === 'priority'){
+          av = priorityRank[a.priority] === undefined ? 99 : priorityRank[a.priority];
+          bv = priorityRank[b.priority] === undefined ? 99 : priorityRank[b.priority];
+        } else {
+          av = (a[key]||'').toString().toLowerCase();
+          bv = (b[key]||'').toString().toLowerCase();
+        }
+        if(av < bv) return -1*dir;
+        if(av > bv) return 1*dir;
+        return 0;
+      });
+      return copy;
+    }
+
+    function pillClass(p){
+      if(p === 'Top') return 'pill pill-top';
+      if(p === 'High') return 'pill pill-high';
+      if(p === 'Medium') return 'pill pill-medium';
+      if(p === 'Low') return 'pill pill-low';
+      return 'pill pill-none';
+    }
+
+    function fieldBlock(label, value, pre){
+      if(!value) return '';
+      var cls = pre ? 'modal-field-value pre' : 'modal-field-value';
+      return '<div class="modal-field"><div class="modal-field-label">' + escapeHtml(label) + '</div><div class="' + cls + '">' + escapeHtml(value) + '</div></div>';
+    }
+
+    function fieldBlockHtml(label, value, recordId, pre){
+      if(!value) return '';
+      var cls = pre ? 'modal-field-value pre' : 'modal-field-value';
+      return '<div class="modal-field"><div class="modal-field-label">' + escapeHtml(label) + '</div><div class="' + cls + '">' + linkifyCitations(value, recordId, refSet) + '</div></div>';
+    }
+
+    function buildModalHtml(r){
+      var html = '';
+      html += '<div class="modal-eyebrow-row">';
+      if(r.id){ html += '<span class="modal-id-badge">' + escapeHtml(r.id) + '</span>'; }
+      if(r.strategy_code){ html += '<span class="modal-id-badge">' + escapeHtml(r.strategy_code) + '</span>'; }
+      html += '</div>';
+      html += '<h3 class="modal-question">' + escapeHtml(r.question || '') + '</h3>';
+      if(r.strategy_name){ html += '<p class="modal-strategy-name">' + escapeHtml(r.strategy_name) + '</p>'; }
+
+      if(r.topics && r.topics.length){
+        html += '<div class="modal-topics">' + r.topics.map(function(t){
+          return '<span class="topic-chip">' + escapeHtml(t) + '</span>';
+        }).join('') + '</div>';
+      }
+
+      html += fieldBlock('Timeframe to resolve', r.timeframe);
+      html += fieldBlockHtml('Source of question/uncertainty', r.source, r.id, false);
+      html += fieldBlock('Date added', r.date_added);
+      html += fieldBlock('Uncertainty status', r.status);
+      if(r.priority){
+        html += '<div class="modal-field"><div class="modal-field-label">Priority level</div><div class="modal-field-value"><span class="' + pillClass(r.priority) + '">' + escapeHtml(r.priority) + '</span></div></div>';
+      }
+      html += fieldBlock('Prioritization source', r.prioritization_source);
+      html += fieldBlock('Latest prioritization date', r.latest_prioritization_date);
+      html += fieldBlockHtml('Status and prioritization notes', r.status_notes, r.id, true);
+      html += fieldBlockHtml('Research notes', r.research_notes, r.id, true);
+      html += fieldBlock('Research review date', r.research_review_date);
+      html += fieldBlockHtml('General notes', r.general_notes, r.id, true);
+
+      return html;
+    }
+
+    var modalBackdrop = document.getElementById('detail-modal');
+    var modalBody = document.getElementById('modal-body');
+
+    function openQuestionModal(r){
+      if(!r) return;
+      modalBody.innerHTML = buildModalHtml(r);
+      modalBackdrop.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('modal-close-btn').focus();
+    }
+    function closeQuestionModal(){
+      modalBackdrop.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('modal-close-btn').addEventListener('click', closeQuestionModal);
+    modalBackdrop.addEventListener('click', function(e){
+      if(e.target === modalBackdrop) closeQuestionModal();
+    });
+    // Citations that open the References page (ambiguous matches, or references without a web link)
+    modalBody.addEventListener('click', function(e){
+      var a = e.target && e.target.closest ? e.target.closest('a.cite-internal') : null;
+      if(!a) return;
+      e.preventDefault();
+      var id = a.dataset ? a.dataset.refId : null, q = a.dataset ? a.dataset.refQ : null;
+      goToReferences(id ? { mode:'entry', key:id } : { mode:'query', key:q }, true);
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && !modalBackdrop.classList.contains('hidden')) closeQuestionModal();
+    });
+
+    function render(){
+      var filtered = applyFilters(activeBaseRecords);
+      var sorted = applySort(filtered);
+
+      if(state.mode === 'search'){
+        var q = (state.search || '').trim();
+        document.getElementById('detail-name').textContent = q ? '“' + q + '”' : 'All questions';
+      }
+
+      document.getElementById('detail-count').textContent = activeBaseRecords.length + ' total';
+      document.getElementById('result-line').textContent =
+        'Showing ' + sorted.length + ' of ' + activeBaseRecords.length + ' question' + (activeBaseRecords.length===1?'':'s');
+
+      var tbody = document.getElementById('table-body');
+      var emptyState = document.getElementById('empty-state');
+
+      if(sorted.length === 0){
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        lastRenderedSorted = sorted;
+        tbody.innerHTML = sorted.map(function(r, idx){
+          return '<tr tabindex="0" role="button" aria-label="View full details" data-idx="' + idx + '">' +
+            '<td class="q-cell">' + escapeHtml(r.question || '') + '</td>' +
+            '<td class="strategy-cell" data-label="Strategy">' + escapeHtml(r.strategy_name || '—') + '</td>' +
+            '<td class="meta-cell id-cell" data-label="ID">' + escapeHtml(r.id || '—') + '</td>' +
+            '<td class="meta-cell" data-label="Priority">' + (r.priority ? '<span class="'+pillClass(r.priority)+'">'+escapeHtml(r.priority)+'</span>' : '—') + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      document.querySelectorAll('thead th').forEach(function(th){
+        th.classList.toggle('active', th.dataset.key === state.sortKey);
+        var arrow = th.querySelector('.arrow');
+        arrow.textContent = th.dataset.key === state.sortKey ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
+      });
+    }
+
+    document.getElementById('table-body').addEventListener('click', function(e){
+      var tr = e.target.closest('tr');
+      if(!tr || !tr.dataset || tr.dataset.idx === undefined) return;
+      openQuestionModal(lastRenderedSorted[tr.dataset.idx]);
+    });
+    document.getElementById('table-body').addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var tr = e.target.closest('tr');
+      if(!tr || !tr.dataset || tr.dataset.idx === undefined) return;
+      e.preventDefault();
+      openQuestionModal(lastRenderedSorted[tr.dataset.idx]);
+    });
+    document.getElementById('search-input').addEventListener('input', function(e){ state.search = e.target.value; render(); });
+    document.getElementById('filter-priority').addEventListener('change', function(e){ state.priority = e.target.value; render(); });
+    document.getElementById('clear-filters').addEventListener('click', function(){
+      state.search=''; state.priority='';
+      document.getElementById('search-input').value='';
+      document.getElementById('filter-priority').value='';
+      render();
+    });
+    document.querySelectorAll('thead th').forEach(function(th){
+      th.addEventListener('click', function(){
+        var key = th.dataset.key;
+        if(state.sortKey === key){ state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; }
+        else { state.sortKey = key; state.sortDir = 'asc'; }
+        render();
+      });
+    });
+
+    // ---------------- References page ----------------
+    var refsQuery = '';
+    var navRefs = document.getElementById('nav-refs');
+    navRefs.classList.remove('hidden');
+    navRefs.onclick = function(){ goToReferences({}, true); };
+    document.getElementById('refs-back-btn').onclick = function(){ history.back(); };
+    document.getElementById('refs-count').textContent = refSet.refs.length + ' reference' + (refSet.refs.length === 1 ? '' : 's');
+
+    function refEntryHtml(r){
+      var h = '<li class="ref-entry" id="ref-' + escapeAttr(r.id) + '"><div class="ref-text">' + linkifyUrls(r.text) + '</div>';
+      if(r.note) h += '<div class="ref-note">' + escapeHtml(r.note) + '</div>';
+      if(r.license) h += '<details class="ref-license"><summary>License information</summary><div>' + linkifyUrls(r.license) + '</div></details>';
+      return h + '</li>';
+    }
+
+    function renderRefs(){
+      var tokens = refsQuery.toLowerCase().split(/\s+/).filter(Boolean);
+      var list = refSet.refs.filter(function(r){
+        return tokens.every(function(t){ return r.search.indexOf(t) !== -1; });
+      });
+      document.getElementById('refs-result-line').textContent =
+        tokens.length ? ('Showing ' + list.length + ' of ' + refSet.refs.length + ' references') : '';
+      var ul = document.getElementById('ref-list');
+      if(!refSet.refs.length){ ul.innerHTML = '<li class="ref-empty">The reference list is not available right now.</li>'; return; }
+      ul.innerHTML = list.length ? list.map(refEntryHtml).join('') : '<li class="ref-empty">No references match your search.</li>';
+    }
+
+    function goToReferences(opts, push){
+      opts = opts || {};
+      refsQuery = (opts.mode === 'query' && opts.key) ? opts.key : '';
+      document.getElementById('refs-search').value = refsQuery;
+      showOnly(viewReferences);
+      renderRefs();
+      if(opts.mode === 'entry' && opts.key){
+        setTimeout(function(){
+          var el = document.getElementById('ref-' + opts.key);
+          if(el){ if(el.scrollIntoView) el.scrollIntoView({block:'center'}); el.classList.add('flash'); }
+        }, 80);
+      }
+      if(push !== false){
+        var h = hashForRoute('references', opts.mode, opts.key);
+        if(location.hash !== h) history.pushState({ appView:'references', mode:opts.mode, key:opts.key }, '', h);
+      }
+    }
+
+    document.getElementById('refs-search').addEventListener('input', function(e){ refsQuery = e.target.value; renderRefs(); });
+    document.getElementById('refs-clear').addEventListener('click', function(){
+      refsQuery = ''; document.getElementById('refs-search').value = ''; renderRefs();
+    });
+
+    // ---------------- Router (Back/Forward, deep links) ----------------
+    function routeTo(st, push){
+      if(st.appView === 'topics'){ goToTopics(push); return; }
+      if(st.appView === 'references'){ goToReferences({ mode: st.mode, key: st.key }, push); return; }
+      if(st.appView === 'detail'){
+        if(st.mode === 'strategy' && strategyCounts[st.key]){ openStrategy(st.key, push); return; }
+        if(st.mode === 'topic' && topicMap[st.key]){ openTopic(st.key, push); return; }
+        if(st.mode === 'search' && st.key){ openSearch(st.key, push); return; }
+      }
+      goToStrategies(push);
+    }
+
+    window.addEventListener('popstate', function(e){
+      var st = (e.state && e.state.appView) ? e.state : parseHashRoute();
+      routeTo(st, false);
+    });
+
+    // Normalize the base history entry to the landing page, then honor
+    // a deep link in the URL (e.g. a shared #/strategy/MWQ link) on top of it.
+    var initialRoute = parseHashRoute();   // read the URL BEFORE normalizing it
+    history.replaceState({ appView:'strategies' }, '', hashForRoute('strategies'));
+    var validRoute =
+      initialRoute.appView === 'topics' || initialRoute.appView === 'references' ||
+      (initialRoute.appView === 'detail' && (
+        (initialRoute.mode === 'strategy' && strategyCounts[initialRoute.key]) ||
+        (initialRoute.mode === 'topic' && topicMap[initialRoute.key]) ||
+        (initialRoute.mode === 'search' && initialRoute.key)));
+    if(validRoute){ routeTo(initialRoute, true); } else { showOnly(viewStrategies); }
+  }
+
+  boot();
+
+})();
+</script>
+
+</body>
+</html>
