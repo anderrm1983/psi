@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Main basin runoff: 2020s vs 2040s (mockup)</title>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --c20:#5f8fb0; --c40:#e08a1e; --accent:#1f6f9f;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1722; --card:#112231; --ink:#e8f0f6; --muted:#9db0bf; --line:#24394b;
+    --c20:#8fb9d6; --c40:#ffb454; --accent:#6cc4ee;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1722; --card:#112231; --ink:#e8f0f6; --muted:#9db0bf; --line:#24394b;
+  --c20:#8fb9d6; --c40:#ffb454; --accent:#6cc4ee;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:14px 14px 28px;max-width:1100px;margin-inline:auto}
+h1{font-size:1.25rem;margin:4px 0 2px}
+.sub{color:var(--muted);margin:0 0 12px;font-size:.9rem}
+.badge{display:inline-block;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);
+  border-radius:99px;padding:1px 8px;color:var(--muted);margin-left:6px;vertical-align:middle}
+.maps{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:640px){.maps{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.panel h2{margin:0;padding:8px 12px;font-size:.95rem;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.panel h2 .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+.panel h2 .val{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:400;font-size:.85rem}
+.panel svg{display:block;width:100%;height:auto;max-height:62vh}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 6px}
+button,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.date{font-weight:600;font-variant-numeric:tabular-nums;min-width:11ch}
+input[type=range]{flex:1 1 220px;min-width:160px;accent-color:var(--accent)}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 8px 4px;margin-top:8px}
+.chart svg{display:block;width:100%;height:auto;touch-action:none;cursor:ew-resize}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:2px 8px 6px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.card b{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:2px}
+.card .big{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.note{color:var(--muted);font-size:.82rem;margin-top:12px}
+</style>
+</head>
+<body>
+<h1>Main basin runoff: 2020s vs 2040s <span class="badge">mockup</span></h1>
+<p class="sub">Daily total flow for all watersheds, shown proportionally. The map is a schematic, not geographic; in the 3D version the same flows will drive the real river lines.</p>
+
+<section class="maps">
+  <div class="panel"><h2><span><i class="dot" style="background:var(--c20)"></i>2020s</span><span class="val" id="val20"></span></h2><div id="mapA"></div></div>
+  <div class="panel"><h2><span><i class="dot" style="background:var(--c40)"></i>2040s</span><span class="val" id="val40"></span></h2><div id="mapB"></div></div>
+</section>
+
+<section class="controls">
+  <button id="play" class="primary" aria-label="Play or pause">Pause</button>
+  <span class="date" id="dateLbl">Jan 1</span>
+  <input id="scrub" type="range" min="1" max="366" step="1" value="1" aria-label="Day of year">
+  <label>Speed <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+</section>
+<section class="controls">
+  <button data-jump="340" id="j20">Jump to 2020s peak</button>
+  <button data-jump="320" id="j40">Jump to 2040s peak</button>
+  <button data-jump="242" id="jlow">Jump to late-summer low</button>
+</section>
+
+<section class="chart">
+  <svg id="chart" viewBox="0 0 960 260" role="img" aria-label="Daily flow, 2020s and 2040s"></svg>
+  <div class="legend"><span><i style="background:var(--c20)"></i>2020s</span><span><i style="background:var(--c40)"></i>2040s</span>
+  <span>Shading: amber = 2040s higher, blue-gray = 2040s lower</span></div>
+</section>
+
+<section class="cards" id="cards"></section>
+<p class="note">Flows are the decadal smoothed daily totals you supplied (m³/s, all watersheds including some off the map), scaled so that the highest value in either decade fills the widest river. Line widths use a gentle square-root-like curve so low flows stay visible. Click or drag on the chart to scrub.</p>
+
+<script>
+const F20 = [1571.3, 1615.9, 1630.8, 1626.8, 1695.0, 1794.9, 1829.8, 1856.6, 1854.5, 1841.4, 1844.3, 1834.4, 1782.1, 1738.6, 1697.5, 1656.0, 1618.3, 1568.4, 1497.1, 1427.1, 1374.7, 1313.3, 1285.1, 1302.1, 1337.6, 1354.8, 1397.6, 1444.5, 1478.9, 1494.3, 1554.1, 1586.4, 1590.0, 1555.0, 1509.4, 1473.1, 1448.9, 1344.9, 1254.0, 1208.0, 1183.5, 1168.6, 1158.2, 1163.8, 1178.6, 1193.2, 1203.9, 1227.6, 1297.4, 1356.5, 1371.6, 1422.3, 1544.4, 1598.4, 1619.1, 1632.5, 1757.4, 1809.0, 1806.7, 1706.5, 1655.0, 1620.7, 1547.4, 1367.4, 1289.6, 1219.0, 1181.5, 1159.5, 1146.0, 1132.4, 1119.4, 1114.7, 1134.3, 1177.0, 1240.4, 1300.0, 1369.1, 1448.3, 1575.8, 1648.6, 1686.2, 1689.0, 1696.5, 1733.8, 1757.6, 1722.7, 1764.8, 1806.4, 1851.3, 1887.4, 1860.7, 1825.8, 1790.8, 1739.1, 1707.6, 1684.3, 1667.5, 1668.7, 1692.2, 1729.3, 1735.3, 1731.4, 1728.7, 1735.9, 1768.5, 1779.7, 1761.1, 1751.1, 1761.8, 1766.3, 1761.6, 1734.1, 1715.9, 1718.7, 1731.4, 1737.1, 1754.5, 1762.0, 1771.1, 1781.6, 1800.6, 1825.9, 1844.8, 1854.0, 1864.0, 1871.6, 1911.6, 1940.5, 1966.2, 1987.3, 2029.6, 2093.9, 2157.2, 2183.7, 2203.4, 2215.9, 2217.6, 2192.0, 2150.3, 2097.4, 2047.8, 2013.8, 1965.0, 1956.3, 1952.9, 1936.9, 1929.1, 1927.1, 1916.4, 1908.1, 1875.4, 1855.5, 1836.7, 1829.4, 1804.1, 1768.5, 1730.9, 1680.7, 1617.7, 1565.6, 1498.3, 1451.5, 1412.1, 1377.4, 1356.0, 1340.1, 1336.5, 1322.7, 1296.6, 1264.7, 1238.5, 1211.4, 1186.5, 1160.2, 1139.7, 1120.5, 1109.0, 1097.3, 1099.9, 1093.1, 1075.3, 1079.0, 1080.0, 1071.0, 1071.3, 1043.9, 1017.4, 988.9, 949.1, 924.3, 906.4, 874.8, 846.8, 821.6, 799.2, 781.1, 756.0, 729.9, 708.8, 688.8, 669.6, 653.9, 633.4, 615.3, 597.3, 580.4, 565.2, 552.5, 540.6, 537.0, 528.0, 520.2, 513.0, 507.2, 500.8, 493.1, 481.6, 473.2, 466.4, 458.3, 450.2, 441.9, 432.8, 425.0, 417.3, 418.3, 426.3, 429.1, 431.3, 431.9, 431.5, 433.9, 427.1, 416.7, 410.4, 406.3, 403.9, 400.0, 397.4, 396.6, 392.7, 390.1, 391.2, 391.1, 393.4, 397.7, 399.2, 403.9, 407.7, 407.8, 413.3, 421.3, 428.1, 435.6, 442.0, 456.5, 471.6, 486.8, 513.2, 561.3, 595.1, 624.2, 659.9, 700.2, 720.1, 721.7, 695.1, 687.3, 681.5, 667.9, 654.6, 664.8, 690.7, 763.7, 844.0, 912.7, 997.3, 1075.0, 1161.3, 1231.1, 1245.1, 1238.9, 1242.3, 1221.3, 1225.5, 1205.9, 1179.7, 1192.7, 1189.6, 1182.0, 1182.7, 1159.8, 1150.1, 1137.4, 1118.4, 1139.2, 1166.9, 1189.2, 1288.5, 1372.3, 1494.4, 1605.2, 1770.0, 1877.7, 1940.9, 1904.7, 1861.8, 1814.4, 1752.8, 1633.8, 1571.8, 1603.6, 1648.3, 1699.6, 1732.6, 1772.2, 1782.5, 1795.2, 1770.3, 1764.8, 1818.9, 1845.3, 1859.1, 1882.1, 1933.0, 1947.2, 1973.2, 1906.2, 1922.4, 1924.9, 1906.7, 1913.6, 1970.1, 2088.1, 2227.9, 2319.4, 2396.8, 2505.1, 2509.6, 2521.6, 2422.3, 2309.8, 2198.4, 2100.5, 1995.1, 1915.7, 1795.1, 1686.0, 1615.4, 1541.7, 1478.7, 1457.6, 1461.5, 1480.6, 1496.3, 1536.5, 1594.3, 1656.0, 1672.4, 1684.8, 1674.4, 1659.2, 1619.2, 1581.6, 1543.0, 1504.2];
+const F40 = [1868.2, 1817.0, 1755.6, 1702.6, 1706.4, 1706.4, 1678.9, 1611.0, 1609.6, 1639.0, 1686.5, 1634.7, 1606.5, 1605.9, 1608.6, 1601.3, 1608.0, 1570.3, 1567.3, 1525.4, 1490.0, 1458.6, 1408.0, 1325.8, 1268.0, 1205.0, 1151.8, 1088.6, 1037.0, 992.4, 953.2, 922.1, 896.8, 926.4, 934.0, 943.6, 997.9, 1034.7, 1064.2, 1096.3, 1098.1, 1116.9, 1141.6, 1181.6, 1242.7, 1320.1, 1436.8, 1500.9, 1579.1, 1672.5, 1719.5, 1773.0, 1853.6, 1900.0, 1944.8, 1956.1, 1943.4, 1928.4, 1881.8, 1862.1, 1823.1, 1790.0, 1789.6, 1780.5, 1774.6, 1781.5, 1712.7, 1639.7, 1594.3, 1533.5, 1477.0, 1415.9, 1353.3, 1305.0, 1329.6, 1371.8, 1409.5, 1445.3, 1455.8, 1475.7, 1494.4, 1480.9, 1442.8, 1440.0, 1463.0, 1470.4, 1488.8, 1518.2, 1531.2, 1553.5, 1597.0, 1602.3, 1666.3, 1709.3, 1737.6, 1743.3, 1756.0, 1716.7, 1702.9, 1669.3, 1650.8, 1644.3, 1677.1, 1716.4, 1750.8, 1784.0, 1818.1, 1842.2, 1852.6, 1844.6, 1828.9, 1840.8, 1854.8, 1871.6, 1922.4, 1977.5, 2007.1, 2039.4, 2061.7, 2081.0, 2093.1, 2100.0, 2098.2, 2125.8, 2145.2, 2155.1, 2170.0, 2170.5, 2153.2, 2150.0, 2130.0, 2121.9, 2121.9, 2114.3, 2122.0, 2131.8, 2155.4, 2173.2, 2208.5, 2235.9, 2283.0, 2316.9, 2346.3, 2341.8, 2346.0, 2318.0, 2302.7, 2262.0, 2227.6, 2216.6, 2190.5, 2160.2, 2131.3, 2098.5, 2062.7, 2034.7, 1986.2, 2014.4, 2023.4, 2030.1, 2024.5, 2017.5, 1992.9, 1953.8, 1858.1, 1784.1, 1709.6, 1628.6, 1548.0, 1489.7, 1440.3, 1404.8, 1362.4, 1328.9, 1305.1, 1288.1, 1260.8, 1236.0, 1204.2, 1171.3, 1139.6, 1109.2, 1081.9, 1057.6, 1031.8, 1012.0, 997.8, 977.9, 958.5, 940.2, 925.8, 910.8, 891.0, 870.6, 847.8, 826.2, 800.8, 770.2, 739.9, 710.6, 682.2, 658.5, 634.5, 612.0, 592.8, 576.2, 563.0, 553.2, 542.5, 530.5, 520.6, 510.5, 499.2, 487.5, 473.4, 465.6, 458.4, 452.1, 446.3, 441.6, 437.4, 435.2, 430.6, 427.8, 426.3, 438.2, 458.6, 470.9, 477.9, 484.1, 491.6, 497.3, 491.2, 475.7, 468.6, 466.4, 466.4, 462.9, 469.4, 469.1, 470.5, 474.4, 475.4, 471.0, 467.7, 454.4, 462.2, 469.0, 473.2, 492.8, 519.1, 546.7, 584.0, 616.2, 642.8, 668.8, 679.2, 706.1, 747.5, 769.8, 777.9, 796.3, 817.8, 834.4, 839.8, 839.3, 833.4, 833.0, 830.7, 835.4, 852.9, 854.0, 850.9, 860.3, 858.3, 868.5, 873.3, 870.2, 874.7, 894.3, 921.5, 942.2, 956.4, 968.3, 981.7, 980.3, 966.8, 991.2, 1019.4, 1050.2, 1096.1, 1127.5, 1157.5, 1205.5, 1207.8, 1216.3, 1226.5, 1217.6, 1249.0, 1365.8, 1524.8, 1699.7, 1865.3, 1964.3, 2035.4, 2057.9, 2006.0, 1897.0, 1795.3, 1766.8, 1786.8, 1883.9, 2007.2, 2232.0, 2469.4, 2667.8, 2771.0, 2894.5, 2952.5, 3012.2, 2962.0, 2908.0, 2859.3, 2799.0, 2719.3, 2640.6, 2544.6, 2435.4, 2312.2, 2192.2, 2110.9, 2063.5, 2017.4, 1973.0, 1946.3, 1925.9, 1928.0, 1946.7, 1927.4, 1991.2, 2059.8, 2125.6, 2197.2, 2242.2, 2271.5, 2290.5, 2216.6, 2133.6, 2042.5, 1956.6, 1896.6, 1837.2, 1780.4, 1738.3, 1736.8, 1746.2, 1723.9, 1684.9, 1696.1, 1679.3, 1681.1, 1636.9, 1569.3, 1558.4, 1549.7, 1466.6];
+const N = F20.length;
+const FMAX = Math.max(...F20, ...F40);
+const YMAX = 3200;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function dayLabel(d){ const dt = new Date(2020,0,Math.max(1,Math.round(d))); return MONTHS[dt.getMonth()] + " " + dt.getDate(); }
+function fmt(v){ return Math.round(v).toLocaleString("en-US"); }
+function lerpArr(a, day){ const i = Math.floor(day)-1, fr = day-Math.floor(day); const i0 = ((i%N)+N)%N, i1 = (i0+1)%N; return a[i0]*(1-fr)+a[i1]*fr; }
+function hex(c){ return [1,3,5].map(i => parseInt(c.slice(i,i+2),16)); }
+function mix(a,b,t){ const A=hex(a),B=hex(b); return "rgb("+A.map((x,i)=>Math.round(x+(B[i]-x)*t)).join(",")+")"; }
+
+/* ---- schematic map ---- */
+const RIVERS = [
+  {id:"puy", w:1.00, d:"M335 372 C300 352 260 372 225 366 C195 361 175 386 152 394"},
+  {id:"grn", w:0.75, d:"M330 292 C295 270 262 288 232 262 C200 240 150 250 116 232"},
+  {id:"ced", w:0.50, d:"M325 205 C300 215 262 205 228 222 C210 230 198 228 192 224"},
+  {id:"iss", w:0.22, d:"M305 135 C292 160 262 190 247 198"},
+  {id:"sam", w:0.45, d:"M245 140 C235 120 210 112 191 124"},
+  {id:"jua", w:0.10, d:"M262 105 C240 125 215 140 198 152"},
+  {id:"mer", w:0.08, d:"M236 205 C222 200 210 196 199 192"},
+  {id:"can", w:0.80, d:"M188 125 C170 112 140 115 118 120"}
+];
+const PLUMES = [{x:152,y:394,w:1.0},{x:116,y:232,w:0.75},{x:118,y:120,w:0.8}];
+const LOW = "#3b88a8", HIGH = "#a6f2ff";
+
+function buildPanel(root, key){
+  let s = `<svg viewBox="0 0 360 420" role="img" aria-label="Schematic river network, ${key==="a"?"2020s":"2040s"}">
+  <defs>
+    <linearGradient id="${key}land" x1="0" x2="1"><stop offset="0" stop-color="#1c2b23"/><stop offset=".55" stop-color="#2a3a2c"/><stop offset="1" stop-color="#524f43"/></linearGradient>
+    <radialGradient id="${key}pl"><stop offset="0" stop-color="#bff6ff" stop-opacity=".9"/><stop offset="1" stop-color="#6cc4ee" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="360" height="420" fill="url(#${key}land)"/>
+  <path d="M120 10 C100 80 120 140 105 200 C95 250 130 300 140 360 C145 390 150 405 150 415" fill="none" stroke="#12324a" stroke-width="40" stroke-linecap="round"/>
+  <path d="M120 10 C100 80 120 140 105 200 C95 250 130 300 140 360 C145 390 150 405 150 415" fill="none" stroke="#17405c" stroke-width="30" stroke-linecap="round"/>
+  <path d="${RIVERS[7].d}" fill="none" stroke="#17405c" stroke-width="3"/>
+  <ellipse id="${key}lkw" cx="190" cy="175" rx="9" ry="52" fill="#17405c"/>
+  <ellipse id="${key}lks" cx="245" cy="170" rx="7" ry="30" fill="#17405c"/>`;
+  PLUMES.forEach((p,i)=>{ s += `<circle id="${key}pl${i}" cx="${p.x}" cy="${p.y}" r="6" fill="url(#${key}pl)" opacity=".2"/>`; });
+  RIVERS.forEach(r=>{
+    s += `<path id="${key}g-${r.id}" d="${r.d}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s += `<path id="${key}m-${r.id}" d="${r.d}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s += `<path id="${key}d-${r.id}" d="${r.d}" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-dasharray="1.5 9" opacity=".8"/>`;
+  });
+  s += `<polygon points="300,372 322,408 278,408" fill="#cfd8de"/><polygon points="300,372 308,386 292,386" fill="#ffffff"/>
+  <g font-family="system-ui,sans-serif" font-size="9" fill="#ffffff" fill-opacity=".55">
+    <text x="276" y="418">Mt Rainier</text><text x="14" y="200">Kitsap</text><text x="14" y="212">Peninsula</text>
+    <text x="55" y="60" transform="rotate(-80 55 60)">Puget Sound</text>
+    <text x="168" y="248">Lake Washington</text><text x="262" y="160">Lake</text><text x="262" y="170">Sammamish</text>
+    <text x="300" y="35" fill-opacity=".4">Cascade foothills</text>
+    <text x="290" y="365" fill-opacity=".7">Puyallup</text><text x="268" y="282" fill-opacity=".7">Green</text><text x="290" y="200" fill-opacity=".7">Cedar</text>
+  </g></svg>`;
+  root.innerHTML = s;
+}
+const phase = {a:0, b:0};
+function updatePanel(key, f, dt){
+  const t = Math.min(1, f/FMAX), tt = Math.pow(t, 0.75);
+  const col = mix(LOW, HIGH, tt);
+  phase[key] += dt * (6 + 70*tt);
+  RIVERS.forEach(r=>{
+    const w = 0.7 + 6.4*r.w*tt;
+    const g = document.getElementById(key+"g-"+r.id), m = document.getElementById(key+"m-"+r.id), d = document.getElementById(key+"d-"+r.id);
+    g.setAttribute("stroke", col); g.setAttribute("stroke-width", (w*3.2).toFixed(2)); g.setAttribute("opacity", (0.08+0.22*tt).toFixed(2));
+    m.setAttribute("stroke", col); m.setAttribute("stroke-width", w.toFixed(2));
+    d.setAttribute("stroke-width", Math.max(0.6, w*0.28).toFixed(2)); d.setAttribute("stroke-dashoffset", (-phase[key]).toFixed(1));
+  });
+  PLUMES.forEach((p,i)=>{
+    const c = document.getElementById(key+"pl"+i);
+    c.setAttribute("r", (5 + 26*p.w*tt).toFixed(1)); c.setAttribute("opacity", (0.12+0.5*tt).toFixed(2));
+  });
+  const lc = mix("#17405c", "#2f86ad", tt);
+  document.getElementById(key+"lkw").setAttribute("fill", lc);
+  document.getElementById(key+"lks").setAttribute("fill", lc);
+}
+
+/* ---- hydrograph ---- */
+const CH = {w:960,h:260,l:52,r:16,t:14,b:30};
+const X = d => CH.l + (d-1)/(N-1)*(CH.w-CH.l-CH.r);
+const Y = v => CH.t + (1 - v/YMAX)*(CH.h-CH.t-CH.b);
+const chart = document.getElementById("chart");
+function line(a){ return a.map((v,i)=>(i?"L":"M")+X(i+1).toFixed(1)+" "+Y(v).toFixed(1)).join(""); }
+const peak = a => a.indexOf(Math.max(...a))+1;
+const P20 = peak(F20), P40 = peak(F40);
+function buildChart(){
+  let s = "";
+  for(let v=0; v<=3000; v+=500){ s += `<line x1="${CH.l}" x2="${CH.w-CH.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${CH.l-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${v.toLocaleString("en-US")}</text>`; }
+  for(let m=0; m<12; m++){ const d = Math.round((new Date(2020,m,1)-new Date(2020,0,1))/86400000)+1;
+    s += `<line x1="${X(d)}" x2="${X(d)}" y1="${CH.t}" y2="${CH.h-CH.b}" stroke="var(--line)" stroke-width="1" opacity=".6"/><text x="${X(d)+4}" y="${CH.h-12}" font-size="11" fill="var(--muted)">${MONTHS[m]}</text>`; }
+  const step = (CH.w-CH.l-CH.r)/(N-1);
+  for(let i=0;i<N;i++){ const hi=Math.max(F20[i],F40[i]), lo=Math.min(F20[i],F40[i]);
+    s += `<rect x="${(X(i+1)-step/2).toFixed(2)}" y="${Y(hi).toFixed(1)}" width="${(step+0.4).toFixed(2)}" height="${Math.max(0.3,Y(lo)-Y(hi)).toFixed(1)}" fill="${F40[i]>=F20[i]?"var(--c40)":"var(--c20)"}" opacity=".28"/>`; }
+  s += `<path d="${line(F20)}" fill="none" stroke="var(--c20)" stroke-width="2.4"/><path d="${line(F40)}" fill="none" stroke="var(--c40)" stroke-width="2.4"/>`;
+  s += `<circle cx="${X(P20)}" cy="${Y(F20[P20-1])}" r="4" fill="var(--c20)"/><circle cx="${X(P40)}" cy="${Y(F40[P40-1])}" r="4" fill="var(--c40)"/>`;
+  s += `<text x="${X(P40)-8}" y="${Y(F40[P40-1])-8}" text-anchor="end" font-size="11" fill="var(--c40)">2040s peak ${dayLabel(P40)}</text>`;
+  s += `<text x="${Math.min(X(P20)+8, CH.w-110)}" y="${Y(F20[P20-1])-8}" font-size="11" fill="var(--c20)">2020s peak ${dayLabel(P20)}</text>`;
+  s += `<line id="mk" y1="${CH.t}" y2="${CH.h-CH.b}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/><circle id="mk20" r="5" fill="var(--c20)" stroke="var(--bg)" stroke-width="2"/><circle id="mk40" r="5" fill="var(--c40)" stroke="var(--bg)" stroke-width="2"/>`;
+  chart.innerHTML = s;
+}
+
+/* ---- summary cards ---- */
+function buildCards(){
+  const days20 = F20.filter(v=>v>2000).length, days40 = F40.filter(v=>v>2000).length;
+  const vol = (F40.reduce((a,b)=>a+b,0)/F20.reduce((a,b)=>a+b,0)-1)*100;
+  const lo20 = F20.indexOf(Math.min(...F20))+1, lo40 = F40.indexOf(Math.min(...F40))+1;
+  const items = [
+    ["Peak flow", `${fmt(Math.max(...F20))} on ${dayLabel(P20)}<br>${fmt(Math.max(...F40))} on ${dayLabel(P40)}`, "2020s / 2040s, m³/s"],
+    ["Days above 2,000 m³/s", `${days20} → ${days40}`, "2020s → 2040s"],
+    ["Annual volume", `${vol>=0?"+":""}${vol.toFixed(1)}%`, "2040s vs 2020s"],
+    ["Lowest flow", `${dayLabel(lo20)} / ${dayLabel(lo40)}`, `${fmt(Math.min(...F20))} / ${fmt(Math.min(...F40))} m³/s`]
+  ];
+  document.getElementById("cards").innerHTML = items.map(i=>`<div class="card"><b>${i[0]}</b><div class="big">${i[1]}</div><div class="sub" style="margin:0;font-size:.8rem">${i[2]}</div></div>`).join("");
+}
+
+/* ---- playback ---- */
+const els = {play:document.getElementById("play"), scrub:document.getElementById("scrub"), date:document.getElementById("dateLbl"),
+  v20:document.getElementById("val20"), v40:document.getElementById("val40"), speed:document.getElementById("speed")};
+let day = 1, playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches, last = null;
+function render(dt){
+  const f20 = lerpArr(F20, day), f40 = lerpArr(F40, day);
+  updatePanel("a", f20, dt); updatePanel("b", f40, dt);
+  els.date.textContent = dayLabel(day) + " (day " + Math.floor(day) + ")";
+  els.v20.textContent = fmt(f20) + " m³/s total · index " + Math.round(100*f20/FMAX);
+  els.v40.textContent = fmt(f40) + " m³/s total · index " + Math.round(100*f40/FMAX);
+  const x = X(Math.min(day, N));
+  const mk = document.getElementById("mk"); mk.setAttribute("x1", x); mk.setAttribute("x2", x);
+  const a = document.getElementById("mk20"), b = document.getElementById("mk40");
+  a.setAttribute("cx", x); a.setAttribute("cy", Y(f20)); b.setAttribute("cx", x); b.setAttribute("cy", Y(f40));
+  if(document.activeElement !== els.scrub) els.scrub.value = Math.min(N, Math.floor(day));
+}
+function frame(ts){
+  if(last === null) last = ts;
+  const dt = Math.min(0.1, (ts-last)/1000); last = ts;
+  if(playing){ day += dt*18*parseFloat(els.speed.value); if(day >= N+1) day -= N; }
+  render(playing ? dt : 0);
+  requestAnimationFrame(frame);
+}
+els.play.addEventListener("click", ()=>{ playing = !playing; els.play.textContent = playing ? "Pause" : "Play"; });
+els.scrub.addEventListener("input", ()=>{ day = parseFloat(els.scrub.value); render(0); });
+document.querySelectorAll("[data-jump]").forEach(b=>b.addEventListener("click", ()=>{ day = parseFloat(b.dataset.jump); playing = false; els.play.textContent = "Play"; render(0); }));
+function scrubFromPointer(e){
+  const r = chart.getBoundingClientRect();
+  const vx = (e.clientX - r.left)/r.width*CH.w;
+  day = Math.max(1, Math.min(N, 1 + (vx-CH.l)/(CH.w-CH.l-CH.r)*(N-1)));
+  render(0);
+}
+let dragging = false;
+chart.addEventListener("pointerdown", e=>{ dragging = true; playing = false; els.play.textContent = "Play"; chart.setPointerCapture(e.pointerId); scrubFromPointer(e); });
+chart.addEventListener("pointermove", e=>{ if(dragging) scrubFromPointer(e); });
+chart.addEventListener("pointerup", ()=>{ dragging = false; });
+
+buildPanel(document.getElementById("mapA"), "a");
+buildPanel(document.getElementById("mapB"), "b");
+buildChart(); buildCards();
+els.play.textContent = playing ? "Pause" : "Play";
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
