@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Family Dinner Planner</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--ink:#2b2622;--mute:#7a7068;--line:#e6dfd5;--acc:#c2552d;--accbg:#fbe9e1;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1a17;--card:#27231f;--ink:#f1ebe3;--mute:#a69b90;--line:#3b352f;--acc:#ee8a62;--accbg:#3b2a22;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1a17;--card:#27231f;--ink:#f1ebe3;--mute:#a69b90;--line:#3b352f;--acc:#ee8a62;--accbg:#3b2a22;color-scheme:dark}
+html,body{margin:0}body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+h1{font:600 26px Georgia,serif;margin:4px 0 2px}h2{font:600 18px Georgia,serif;margin:0 0 10px}h3{font:600 13px system-ui;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin:12px 0 4px}
+.sub,.meta{color:var(--mute)}.sub{margin:0 0 18px}.meta{font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:99px;padding:4px 11px;font-size:14px;cursor:pointer}
+.chip.on{background:var(--accbg);border-color:var(--acc);color:var(--acc)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;box-sizing:border-box}
+textarea{min-height:60px;font-size:14px}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+.btn{display:inline-block;background:var(--acc);color:#fff;border:0;border-radius:9px;padding:9px 15px;font:600 15px system-ui;cursor:pointer;text-decoration:none;margin-top:10px}
+.sec{background:transparent;color:var(--acc);border:1px solid var(--acc);margin-top:0;padding:5px 10px;font-size:13px}
+.meal{border-top:1px solid var(--line);padding:10px 0}.meal:first-of-type{border-top:0}
+details{margin-top:4px}summary{cursor:pointer;color:var(--acc);font-size:14px}
+pre{white-space:pre-wrap;font:14px/1.45 system-ui;margin:6px 0}
+ul{padding:0;margin:0}li{list-style:none;padding:2px 0}li label{display:flex;gap:8px;margin:0;color:var(--ink);font-size:16px}li input{width:auto}
+.q{color:var(--mute);font-size:13px}.opt li{color:var(--mute);font-size:14px}.tag{color:var(--acc)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.seg button{border:0;background:transparent;color:var(--ink);padding:5px 10px;font:14px system-ui;cursor:pointer}.seg .on{background:var(--accbg);color:var(--acc);font-weight:600}
+.night{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line)}.night:first-child{border-top:0}.night b{width:34px}
+.ev{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.ev:first-of-type{border-top:0}.ev>div:last-child{display:flex;gap:6px}
+</style></head><body><main>
+<h1>Family Dinner Planner</h1>
+<p class="sub">Tell it what you have on hand and get dinners, a grocery list, and calendar reminders.</p>
+
+<div class="card"><h2>1 · Who’s cooking, and how much effort?</h2>
+<div class="meta">Set each night, or choose “Not cooking” to skip it (eating out, takeout). Meals tagged quick or involved, and Rob’s or Alice’s specialties (see “Meal settings” at the bottom), get matched to the right nights.</div>
+<div id="nights" style="margin-top:6px"></div></div>
+
+<div class="card"><h2>2 · What do you have on hand?</h2>
+<div class="meta">Pantry staples start selected. Tap any you’re out of, then tap the fresh things in your fridge.</div>
+<h3>Pantry staples</h3><div id="stap" class="chips"></div>
+<h3>Fresh &amp; fridge</h3><div id="chips" class="chips"></div>
+<div class="meta">I’ll mix dinners that fit what you have with ones you haven’t made in a while, plus pizza on Friday.</div>
+<button class="btn" id="go">Plan my week</button></div>
+
+<div class="card" id="planCard" hidden><h2>3 · This week’s dinners</h2><div id="plan"></div></div>
+<div class="card" id="groCard" hidden><h2>4 · Grocery list</h2><div id="gro"></div><button class="btn sec" id="cpy" style="margin-top:12px">Copy list</button></div>
+<div class="card" id="calCard" hidden><h2>5 · Calendar reminders</h2>
+<div class="row"><div><label for="start">Week starting (Sunday)</label><input type="date" id="start"></div><div><label for="time">Dinner time</label><input type="time" id="time"></div></div>
+<div id="evs" style="margin-top:10px"></div>
+<div class="meta" style="margin-top:8px">Each event holds the recipe notes, ingredients, and what to buy. If a link is blocked, use “Copy details.”</div></div>
+
+<div class="card"><h2>Meal settings</h2>
+<details><summary>Set each meal’s effort and cook</summary><div id="ml" style="margin-top:6px"></div></details></div>
+
+<div class="card"><h2>Grow your repertoire</h2>
+<details><summary>Add a meal</summary>
+<label for="an">Meal name</label><input id="an">
+<label for="af">Fresh ingredients to buy (comma-separated)</label><input id="af" placeholder="e.g. salmon, asparagus, lemon">
+<label for="ap">Pantry items used</label><input id="ap" placeholder="e.g. rice, yogurt">
+<label for="ao">Optional extras</label><input id="ao">
+<label for="ar">Recipe or notes</label><textarea id="ar"></textarea>
+<label for="ae">Effort</label><select id="ae"><option value="">Either</option><option value="quick">Quick &amp; simple</option><option value="complex">More involved</option></select>
+<label for="aw">Cook</label><select id="aw"><option value="">Either</option><option>Rob</option><option>Alice</option></select>
+<button class="btn" id="add">Add meal</button></details>
+<div id="cl"></div>
+<div class="meta" style="margin-top:8px">Added meals join the pool I pick from. You can also type recipe notes inside any meal on the plan.</div></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const G="fresh green vegetables",R="potatoes / root veg";
+const MEALS=[
+{id:"frittata",n:"Potato-egg frittata",w:1,need:[R,G],pan:["eggs"],opt:["sausage","red pepper"]},
+{id:"ramen",n:"Ramen soup",w:1,need:["tofu","cabbage",G],pan:["ramen noodles","chicken broth"],opt:[],note:"Tofu can be swapped for another protein."},
+{id:"meatballs",n:"Pasta + meatballs + sauce",w:1,need:[],pan:["pasta","ground meat","red sauce"],opt:["pesto","sausage"],note:"Beef, turkey, lamb or sausages. Red sauce or pesto."},
+{id:"friedrice",n:"Fried rice",w:1,need:["carrots","tofu",G],pan:["rice","eggs"],opt:[],note:"Tofu can be swapped for another protein."},
+{id:"tacos",n:"Taco night",w:2,need:[G,"cabbage","carrots"],pan:["tortillas","rice","black beans","salsa","cheddar"],opt:["meat","red pepper","sour cream"],note:"Greens plus a cabbage and carrot slaw."},
+{id:"piccata",n:"Chicken piccata",w:2,need:["chicken breasts","lemon","capers","shallots"],pan:["rice"],opt:["harvest grains"],note:"Thighs work too. Onion can stand in for shallots."},
+{id:"kalesoup",n:"Kale-sausage soup",w:2,need:["kale","sausage"],pan:["lentils"],opt:[]},
+{id:"bibimbap",n:"Bibimbap-style bowl",w:2,need:["kimchi",G,"tofu"],pan:["rice","eggs"],opt:["carrots"],note:"Poach the eggs. Tofu or meat."},
+{id:"roast",n:"Roast chicken w/ sides",w:3,need:["roaster chicken",R],pan:["rice"],opt:[],note:"Root veg or a green veg like broccoli. Rice or another grain."},
+{id:"kalechips",n:"Kale chips, poached eggs, yogurt",w:3,need:["kale"],pan:["eggs","yogurt"],opt:["bacon"]},
+{id:"chili",n:"Turkey chili",w:3,need:["onions"],pan:["ground meat","black beans"],opt:[],note:"Use ground turkey."},
+{id:"stirfry",n:"Vegetable stir-fry",w:3,need:[G,"onions","garlic"],pan:[],opt:["tofu","meat"]},
+{id:"pizza",n:"Pizza",w:0,pizza:1,need:[],pan:["pizza dough ingredients","red sauce","mozzarella","salami"],opt:["red pepper","onions"],note:"Veg or other toppings of your choice."},
+{id:"meatveg",n:"Good ol’ meat + veg + grain",fb:1,need:["chicken thighs",G],pan:["rice"],opt:[],note:"Chicken thighs, lamb chops or pork chops. Broccoli or another green veg. Rice or another grain."},
+{id:"burgers",n:"Hamburgers",fb:1,need:["buns",G],pan:["ground meat","cheddar","pickles"],opt:[],note:"Lamb or turkey. Veg on the side."}];
+const PRODUCE=[G,"cabbage","carrots","red pepper",R,"onions","kale","lemon","garlic","shallots","kimchi"];
+const PROTEIN=["tofu","sausage","chicken breasts","chicken thighs","roaster chicken","bacon","meat"];
+const QTY={[G]:"×4 for the week",carrots:"1 bag",[R]:"×2–3",onions:"×2–3"};
+const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri"],GROUPS=["Produce","Meat & protein","Pantry restock","Other"];
+const STAPLES=["eggs","ramen noodles","chicken broth","pasta","ground meat","red sauce","pesto","rice","mozzarella","cheddar","salami","tortillas","black beans","salsa","lentils","yogurt","pickles","pizza dough ingredients"];
+let S={fridge:STAPLES.slice(),plan:[],why:{},base:{},planAt:0,sun:"",time:"18:00",notes:{},custom:[],cook:["Rob","Rob","Rob","Rob","Rob","Rob"],ne:["quick","quick","quick","quick","quick","pizza"],me:{},who:{piccata:"Rob",roast:"Alice"}};
+try{const j=localStorage.getItem("dinnerplanner3");if(j)S=Object.assign(S,JSON.parse(j));else{const o=JSON.parse(localStorage.getItem("dinnerplanner2")||"null");if(o){S.notes=o.notes||{};S.custom=o.custom||[]}}}catch(e){}
+if(S.v!=2){S.cook=["Rob","Rob","Rob","Rob","Rob","Rob"];S.ne=["quick","quick","quick","quick","quick","pizza"];S.v=2}
+const save=()=>{try{localStorage.setItem("dinnerplanner3",JSON.stringify(S))}catch(e){}};
+const all=()=>MEALS.concat(S.custom),byId=id=>all().find(m=>m.id==id);
+const have=i=>S.fridge.includes(i);
+const req=m=>m.need.concat(m.pan);const ratio=m=>{const r=req(m);return r.length?r.filter(have).length/r.length:1};
+const grp=i=>PRODUCE.includes(i)?"Produce":PROTEIN.includes(i)?"Meat & protein":STAPLES.includes(i)?"Pantry restock":"Other";
+const pad=n=>String(n).padStart(2,"0");
+const fmt=d=>d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00";
+function copy(t,b){const ok=()=>{if(b){const o=b.textContent;b.textContent="Copied ✓";setTimeout(()=>b.textContent=o,1400)}};
+ const fb=()=>{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");ok()}catch(e){}a.remove()};
+ try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}}
+const DAY=864e5;
+const stale=m=>{const t=S.base[m.id];return t?Math.min((Date.now()-t)/DAY,42)/42:1};
+const pick=(n,pool,key)=>pool.map(m=>[m,key(m)+Math.random()*.15]).sort((a,b)=>b[1]-a[1]).slice(0,n).map(x=>x[0]);
+const fits=(pool,want,cook)=>{const w=m=>!S.who[m.id]||S.who[m.id]==cook,e=m=>!S.me[m.id]||S.me[m.id]==want;
+ for(const f of[m=>w(m)&&e(m),w,e]){const ok=pool.filter(f);if(ok.length)return ok}return pool};
+const bonus=(m,i)=>(S.me[m.id]==S.ne[i]?.25:0)+(S.who[m.id]==S.cook[i]?.15:0);
+function planWeek(){const now=Date.now();
+ if(S.plan.length&&now-S.planAt>=3*DAY)S.plan.forEach(id=>id&&(S.base[id]=S.planAt));
+ const order=[0,1,2,3,4].filter(i=>S.cook[i]!="Out").sort(()=>Math.random()-.5),used=[],plan=Array(6).fill(null),why={};
+ order.forEach((s,k)=>{const fit=k<Math.round(order.length*.6);
+  const pool=fits(all().filter(m=>!m.pizza&&!used.includes(m.id)),S.ne[s],S.cook[s]);
+  const m=pick(1,pool,x=>(fit?ratio(x)+.3*stale(x):stale(x))+bonus(x,s))[0];
+  used.push(m.id);plan[s]=m.id;why[m.id]=fit?"fit":"stale"});
+ plan[5]=S.cook[5]=="Out"?null:"pizza";S.why=why;S.plan=plan;S.planAt=now;save();draw()}
+function swap(i){const cur=S.plan[i];
+ const c=fits(all().filter(m=>!m.pizza&&!S.plan.includes(m.id)),S.ne[i],S.cook[i]).map(m=>[m,ratio(m)+.5*stale(m)+bonus(m,i)+Math.random()*.2]).sort((a,b)=>b[1]-a[1]);
+ if(c.length){S.plan[i]=c[0][0].id;if(cur)delete S.why[cur];S.why[c[0][0].id]="swap";save();draw()}}
+function grocery(P){const buy={},opt={};
+ P.forEach(m=>req(m).filter(i=>!have(i)).forEach(i=>(buy[i]=buy[i]||[]).push(m.n)));
+ P.forEach(m=>m.opt.filter(i=>!have(i)&&!buy[i]).forEach(i=>(opt[i]=opt[i]||[]).push(m.n)));
+ return{buy,opt,pan:[...new Set(P.flatMap(m=>m.pan))]}}
+const line=(i,q)=>i+(q?" ("+q+")":"");
+function groText(P){const g=grocery(P),ks=Object.keys(g.buy);if(!ks.length)return"Nothing to buy this week.";
+ return GROUPS.map(x=>{const l=ks.filter(k=>grp(k)==x).sort();return l.length?x+":\n"+l.map(k=>"☐ "+line(k,QTY[k])).join("\n"):""}).filter(Boolean).join("\n\n")+(Object.keys(g.opt).length?"\n\nOptional: "+Object.keys(g.opt).join(", "):"")}
+function details(m){const n=req(m).filter(i=>!have(i));
+ return [m.note,S.notes[m.id]&&"My notes: "+S.notes[m.id],"Fresh: "+(m.need.join(", ")||"none"),"Pantry: "+(m.pan.join(", ")||"none"),m.opt.length&&"Optional: "+m.opt.join(", "),"To buy: "+(n.join(", ")||"nothing")].filter(Boolean).join("\n\n")}
+const P=()=>S.plan.map(byId).filter(Boolean);
+const seg=(attr,i,o,cur)=>`<span class="seg">${o.map(([v,l])=>`<button ${attr}="${i}" data-v="${v}" class="${cur==v?"on":""}">${l}</button>`).join("")}</span>`;
+const nightLabel=i=>DAYS[i]+" · "+S.cook[i]+(i<5?" · "+(S.ne[i]=="quick"?"Quick & simple":"More involved"):"");
+function drawNights(){$("#nights").innerHTML=DAYS.map((d,i)=>`<div class="night"><b>${d}</b>${seg("data-nc",i,[["Rob","Rob"],["Alice","Alice"],["Out","Not cooking"]],S.cook[i])}${S.cook[i]=="Out"?'<span class="meta">Meal out or takeout</span>':i<5?seg("data-ne",i,[["quick","Quick &amp; simple"],["complex","More involved"]],S.ne[i]):'<span class="meta">Pizza night</span>'}</div>`).join("")}
+function drawMeals(){$("#ml").innerHTML=all().filter(m=>!m.pizza).map(m=>`<div class="night"><span style="flex:1;min-width:150px">${esc(m.n)}</span>${seg("data-me",m.id,[["quick","Quick"],["complex","Involved"],["","Either"]],S.me[m.id]||"")}${seg("data-mw",m.id,[["","Any cook"],["Rob","Rob"],["Alice","Alice"]],S.who[m.id]||"")}</div>`).join("")}
+const WHY={fit:"Fits what you have",stale:"Haven’t had it in a while",swap:"Swapped in"};
+function drawChips(){const f=[...new Set(all().flatMap(m=>m.need.concat(m.pan,m.opt)))].filter(i=>!STAPLES.includes(i)).sort();
+ const c=i=>`<button class="chip${have(i)?" on":""}" data-k="${esc(i)}">${esc(i)}</button>`;
+ $("#stap").innerHTML=STAPLES.map(c).join("");$("#chips").innerHTML=f.map(c).join("");
+ $("#cl").innerHTML=S.custom.map(m=>`<div class="ev"><span>${esc(m.n)}</span><button class="btn sec" data-rm="${m.id}">Remove</button></div>`).join("")}
+function drawPlan(){
+ $("#plan").innerHTML=S.plan.map((id,i)=>{const m=byId(id);if(!m)return `<div class="meal"><div class="meta">${DAYS[i]} · Not cooking</div></div>`;const r=req(m),n=r.filter(j=>!have(j));
+  return `<div class="meal"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><div class="meta">${esc(nightLabel(i))}${S.why[m.id]?` · <span class="tag">${WHY[S.why[m.id]]}</span>`:""}</div><b>${esc(m.n)}</b></div>${m.pizza?"":`<button class="btn sec" data-sw="${i}">Swap</button>`}</div>
+<div class="meta">${r.length-n.length} of ${r.length} ingredients on hand${n.length?" · need: "+esc(n.join(", ")):""}</div>
+<details><summary>Ingredients &amp; notes</summary><pre>${esc([m.note,"Fresh: "+(m.need.join(", ")||"none"),"Pantry: "+(m.pan.join(", ")||"none"),m.opt.length&&"Optional: "+m.opt.join(", ")].filter(Boolean).join("\n"))}</pre>
+<textarea data-n="${m.id}" placeholder="Your recipe or cooking notes">${esc(S.notes[m.id]||"")}</textarea></details></div>`}).join("")}
+function drawGro(){const p=P(),g=grocery(p),ks=Object.keys(g.buy);let h="";
+ GROUPS.forEach(x=>{const l=ks.filter(k=>grp(k)==x).sort();if(l.length)h+=`<h3>${x}</h3><ul>`+l.map(k=>`<li><label><input type="checkbox"><span>${esc(k)} <span class="q">${esc(QTY[k]||"")} · ${esc(g.buy[k].join(", "))}</span></span></label></li>`).join("")+"</ul>"});
+ if(!ks.length)h+="<div class='meta'>Nothing fresh to buy. You’re set.</div>";
+ const o=Object.keys(g.opt);if(o.length)h+=`<h3>Optional extras</h3><ul class="opt">`+o.map(k=>`<li>${esc(k)} <span class="q">· ${esc(g.opt[k].join(", "))}</span></li>`).join("")+"</ul>";
+$("#gro").innerHTML=h;$("#cpy").onclick=e=>copy(groText(p),e.target)}
+let ev=[];
+function drawCal(){if(!S.sun){const d=new Date();d.setDate(d.getDate()+((7-d.getDay())%7||7));S.sun=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+ $("#start").value=S.sun;$("#time").value=S.time;
+ const [y,mo,da]=S.sun.split("-").map(Number),[hh,mm]=S.time.split(":").map(Number),p=P();
+ ev=[{t:"Grocery run for the week",s:new Date(y,mo-1,da-1,10,0),d:"Grocery list:\n\n"+groText(p)}].concat(S.plan.map((id,i)=>{const m=byId(id);return m?({t:"Dinner ("+S.cook[i]+"): "+m.n,s:new Date(y,mo-1,da+i,hh,mm),d:"Cooking: "+S.cook[i]+"\n\n"+details(m)}):null}).filter(Boolean));
+ $("#evs").innerHTML=ev.map((e,i)=>{const url="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(e.t)+"&dates="+fmt(e.s)+"/"+fmt(new Date(+e.s+36e5))+"&details="+encodeURIComponent(e.d);
+  return `<div class="ev"><div><b>${esc(e.t)}</b><div class="meta">${e.s.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})}</div></div><div><a class="btn sec" href="${url}" target="_blank" rel="noopener">Add to Google Calendar</a><button class="btn sec" data-c="${i}">Copy details</button></div></div>`}).join("")}
+function draw(){drawNights();drawMeals();drawChips();const has=S.plan.length>0;["#planCard","#groCard","#calCard"].forEach(s=>$(s).hidden=!has);if(has){drawPlan();drawGro();drawCal()}}
+document.addEventListener("click",e=>{const t=e.target;
+ if(t.dataset.k){const k=t.dataset.k;S.fridge=have(k)?S.fridge.filter(x=>x!=k):S.fridge.concat(k);save();t.classList.toggle("on");if(S.plan.length){drawPlan();drawGro();drawCal()}}
+ if(t.dataset.c)copy(ev[+t.dataset.c].d,t);
+ if(t.dataset.sw!==undefined)swap(+t.dataset.sw);
+ if(t.dataset.nc!==undefined){const i=+t.dataset.nc,v=t.dataset.v;S.cook[i]=v;if(S.plan.length){if(v=="Out")S.plan[i]=null;else if(!S.plan[i]){if(i==5)S.plan[5]="pizza";else swap(i)}}save();draw()}
+ if(t.dataset.ne!==undefined){S.ne[+t.dataset.ne]=t.dataset.v;save();draw()}
+ if(t.dataset.me){if(t.dataset.v)S.me[t.dataset.me]=t.dataset.v;else delete S.me[t.dataset.me];save();drawMeals()}
+ if(t.dataset.mw){if(t.dataset.v)S.who[t.dataset.mw]=t.dataset.v;else delete S.who[t.dataset.mw];save();drawMeals()}
+ if(t.dataset.rm){S.custom=S.custom.filter(m=>m.id!=t.dataset.rm);S.plan=S.plan.filter(i=>i!=t.dataset.rm);save();draw()}});
+document.addEventListener("change",e=>{const t=e.target;
+ 
+ if(t.dataset.n){S.notes[t.dataset.n]=t.value;save();drawCal()}});
+$("#go").onclick=planWeek;
+$("#start").onchange=e=>{S.sun=e.target.value;save();drawCal()};
+$("#time").onchange=e=>{S.time=e.target.value||"18:00";save();drawCal()};
+$("#add").onclick=()=>{const n=$("#an").value.trim();if(!n)return;const L=s=>$(s).value.split(",").map(x=>x.trim().toLowerCase()).filter(Boolean);
+ const id="c"+Date.now();S.custom.push({id,n,w:-1,need:L("#af"),pan:L("#ap"),opt:L("#ao"),note:$("#ar").value.trim()});
+ if($("#ae").value)S.me[id]=$("#ae").value;if($("#aw").value)S.who[id]=$("#aw").value;["#an","#af","#ap","#ao","#ar","#ae","#aw"].forEach(s=>$(s).value="");save();draw()};
+draw();
+</script></body></html>
